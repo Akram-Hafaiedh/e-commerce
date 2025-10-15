@@ -1,4 +1,6 @@
-import { products, categories } from '@/lib/category';
+import { categories } from '@/lib/category';
+import { products } from '@/lib/product';
+
 import { notFound } from 'next/navigation';
 import ProductContent from './ProductContent';
 
