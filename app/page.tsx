@@ -5,14 +5,16 @@ import { categories } from '@/lib/category';
 import { products } from '@/lib/product';
 
 import ProductCard from './components/ProductCard';
+import AnimatedProductSlider from './components/AnimatedProductSlider';
 
 export default function Home() {
   const featuredProducts = products.filter(product => product.featured);
   const featuredCategories = categories.filter(category => category.featured);
   const saleProducts = products.filter(product => product.onSale);
-
-  // Get popular products (next 6 products for demo)
-  const popularProducts = products.slice(8, 14);
+  const newArrivals = [...products].reverse().slice(0, 8); // Get new arrivals (last 8 products added)
+  const popularProducts = products
+    .filter(product => product.rating && product.rating >= 4.5)
+    .slice(0, 8);
 
   return (
     <div className="min-h-screen bg-white">
@@ -85,6 +87,17 @@ export default function Home() {
         </div>
       </section>
 
+      <AnimatedProductSlider
+        products={newArrivals}
+        title="New Arrivals 🚀"
+        description="Check out our latest products just added to the store"
+        showViewAll={true}
+        viewAllLink="/products?sort=newest"
+        viewAllText="View All New Arrivals"
+        autoPlay={true}
+        autoPlayInterval={4000}
+      />
+
       {/* Featured Products */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
@@ -114,55 +127,32 @@ export default function Home() {
         </div>
       </section>
 
-      {/* On Sale Now */}
-      {saleProducts.length > 0 && (
-        <section className="py-16 bg-gradient-to-r from-red-500 to-pink-600">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-5xl font-bold text-white mb-4">On Sale Now! 🔥</h2>
-              <p className="text-xl text-white opacity-90 max-w-2xl mx-auto">
-                Don&apos;t miss these amazing deals. Limited time offers with huge discounts!
-              </p>
-            </div>
+      {/* On Sale Now Slider */}
+      <AnimatedProductSlider
+        products={saleProducts}
+        title="On Sale Now! 🔥"
+        description="Don't miss these amazing deals. Limited time offers with huge discounts!"
+        backgroundColor="bg-gradient-to-r from-red-500 to-pink-600"
+        textColor="text-white"
+        showViewAll={true}
+        viewAllLink="/products?filter=onSale"
+        viewAllText="View All Sale Items"
+        autoPlay={true}
+        autoPlayInterval={3500}
+      />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {saleProducts.slice(0, 8).map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <Link
-                href="/products?filter=onSale"
-                className="bg-white text-red-600 px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors font-bold text-lg shadow-2xl inline-flex items-center"
-              >
-                🏃‍♂️ View All Sale Items
-                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Popular Products */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Most Popular</h2>
-            <p className="text-gray-600 text-lg">
-              See what other customers are loving right now
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {popularProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Popular Products Slider */}
+      <AnimatedProductSlider
+        products={popularProducts}
+        title="Customer Favorites ⭐"
+        description="Products loved by our customers with highest ratings"
+        backgroundColor="bg-gradient-to-r from-green-500 to-emerald-600"
+        textColor="text-white"
+        showViewAll={true}
+        viewAllLink="/products?sort=rating"
+        viewAllText="View All Popular"
+        autoPlay={true}
+      />
 
       {/* Features Section */}
       <section className="py-16 bg-white border-t border-gray-200">
