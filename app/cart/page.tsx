@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCart } from '../context/CartContext';
-import { CartItem } from '@/lib/cart';
+import { CartItem } from '@/types/cart';
 
 export default function CartPage() {
     const { items, updateQuantity, removeFromCart, clearCart, getTotalPrice, getTotalItems } = useCart();
