@@ -1,14 +1,5 @@
+import { Category } from "@/types/category";
 
-export interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-    image: string;
-    featured?: boolean;
-}
-
-// Sample data - in a real app, this would come from a database or CMS
 export const categories: Category[] = [
     {
         id: '1',

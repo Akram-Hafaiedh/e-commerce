@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { categories } from '@/lib/category';
 import { products } from '@/lib/product';
 import { notFound, useParams } from 'next/navigation';

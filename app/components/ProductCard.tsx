@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { Product } from '@/lib/product';
 import { useCart } from '../context/CartContext';
+import { Product } from '@/types/product';
 
 interface ProductCardProps {
   product: Product;

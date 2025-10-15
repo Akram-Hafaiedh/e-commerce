@@ -1,9 +1,5 @@
-import { Product } from "./product";
-
-export interface CartItem {
-    product: Product;
-    quantity: number;
-}
+import { CartItem } from "@/types/cart";
+import { Product } from "@/types/product";
 
 export interface CartContextType {
     items: CartItem[];
