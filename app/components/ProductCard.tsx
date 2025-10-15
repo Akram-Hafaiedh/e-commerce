@@ -63,7 +63,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
             {product.category}
           </span>
-          <span className="text-xs text-gray-500">{product.rating || 4.5}</span>
+          <div className="flex items-center space-x-1">
+            <span className="text-yellow-400 text-xs">⭐</span>
+            <span className="text-xs text-gray-700 font-medium">{product.rating}</span>
+            <span className="text-xs text-gray-500">({product.reviewCount})</span>s
+          </div>
         </div>
 
         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">

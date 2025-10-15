@@ -93,11 +93,17 @@ export default function ProductContent({ product, category }: ProductContentProp
                             <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
                                 {category?.name || 'Uncategorized'}
                             </span>
-                            <div className="flex items-center space-x-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <span key={star} className="text-yellow-400">⭐</span>
-                                ))}
-                                <span className="text-gray-600 ml-2">(4.5/5)</span>
+                            <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <span key={star} className={`text-${star <= Math.floor(product.rating || 5) ? 'yellow-400' : 'gray-300'}`}>
+                                            ⭐
+                                        </span>
+                                    ))}
+                                </div>
+                                <span className="text-gray-600">
+                                    {product.rating}/5 ({product.reviewCount} reviews)
+                                </span>
                             </div>
                         </div>
 

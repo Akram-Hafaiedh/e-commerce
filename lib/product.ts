@@ -13,6 +13,7 @@ export const products: Product[] = [
         featured: true,
         onSale: true,
         rating: 4.8,
+        reviewCount: 124,
         stock: 15
     },
     {
@@ -26,6 +27,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.9,
+        reviewCount: 78,
         stock: 8
     },
     {
@@ -40,6 +42,7 @@ export const products: Product[] = [
         featured: true,
         onSale: true,
         rating: 4.7,
+        reviewCount: 32,
         stock: 5
     },
     {
@@ -53,6 +56,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.4,
+        reviewCount: 24,
         stock: 20
     },
     {
@@ -66,6 +70,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.6,
+        reviewCount: 16,
         stock: 12
     },
     {
@@ -79,6 +84,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.2,
+        reviewCount: 8,
         stock: 30
     },
     {
@@ -92,6 +98,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.1,
+        reviewCount: 6,
         stock: 40
     },
     {
@@ -105,6 +112,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.5,
+        reviewCount: 12,
         stock: 22
     },
     {
@@ -118,6 +126,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.9,
+        reviewCount: 36,
         stock: 7
     },
     {
@@ -132,6 +141,7 @@ export const products: Product[] = [
         featured: false,
         onSale: true,
         rating: 4.3,
+        reviewCount: 18,
         stock: 50
     },
     {
@@ -145,10 +155,11 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.7,
+        reviewCount: 12,
         stock: 25
     },
     {
-        id: '11',
+        id: '12',
         name: 'Designer Hoodie',
         description: 'Premium quality hoodie with unique design',
         price: 79.99,
@@ -158,6 +169,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.7,
+        reviewCount: 12,
         stock: 25
     },
     {
@@ -171,6 +183,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.8,
+        reviewCount: 8,
         stock: 10
     },
     {
@@ -184,6 +197,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.5,
+        reviewCount: 14,
         stock: 35
     },
     {
@@ -198,6 +212,7 @@ export const products: Product[] = [
         featured: true,
         onSale: true,
         rating: 4.5,
+        reviewCount: 16,
         stock: 18
     },
     {
@@ -211,6 +226,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.3,
+        reviewCount: 10,
         stock: 40
     },
     {
@@ -224,6 +240,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.0,
+        reviewCount: 6,
         stock: 60
     },
     {
@@ -237,6 +254,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.6,
+        reviewCount: 8,
         stock: 14
     },
 
@@ -252,6 +270,7 @@ export const products: Product[] = [
         featured: true,
         onSale: true,
         rating: 4.8,
+        reviewCount: 12,
         stock: 10
     },
     {
@@ -265,6 +284,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.6,
+        reviewCount: 10,
         stock: 30
     },
     {
@@ -278,6 +298,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.2,
+        reviewCount: 8,
         stock: 25
     },
     {
@@ -291,6 +312,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.3,
+        reviewCount: 9,
         stock: 20
     },
     {
@@ -305,6 +327,7 @@ export const products: Product[] = [
         featured: false,
         onSale: true,
         rating: 4.4,
+        reviewCount: 11,
         stock: 15
     },
     {
@@ -318,6 +341,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.5,
+        reviewCount: 14,
         stock: 18
     },
     {
@@ -331,6 +355,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.7,
+        reviewCount: 16,
         stock: 12
     },
     {
@@ -344,6 +369,7 @@ export const products: Product[] = [
         featured: false,
         onSale: false,
         rating: 4.3,
+        reviewCount: 7,
         stock: 28
     },
     {
@@ -357,6 +383,7 @@ export const products: Product[] = [
         featured: true,
         onSale: false,
         rating: 4.6,
+        reviewCount: 13,
         stock: 10
     },
 ];

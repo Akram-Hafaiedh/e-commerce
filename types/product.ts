@@ -10,5 +10,7 @@ export interface Product {
     featured: boolean;
     onSale: boolean;
     rating?: number;
+    reviewCount: number;
     stock: number;
+    createdAt?: string;
 }
