@@ -3,6 +3,7 @@
 import { CartItem } from "@/types/cart";
 import { CartContextType } from "@/lib/cart";
 import { createContext, useContext, useEffect, useState } from "react";
+import { Order } from "@/types/order";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -66,6 +67,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
     }
 
+    const [orders, setOrders] = useState<Order[]>([]);
+
+    const addOrder = (orderData: Omit<Order, 'id'>) => {
+        const newOrder: Order = {
+            ...orderData,
+            id: Math.random().toString(36).substr(2, 9),
+        };
+        setOrders(prev => [...prev, newOrder]);
+
+        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+
+        localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrder]));
+    };
+
     return (
         <CartContext.Provider value={{
             items,
@@ -74,7 +89,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             updateQuantity,
             clearCart,
             getTotalItems,
-            getTotalPrice
+            getTotalPrice,
+            orders,
+            addOrder,
         }}>
             {children}
         </CartContext.Provider>

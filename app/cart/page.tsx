@@ -65,14 +65,14 @@ export default function CartPage() {
                                         <div className="flex items-center space-x-2">
                                             <button
                                                 onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                                                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100"
+                                                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100 text-gray-500"
                                             >
                                                 -
                                             </button>
-                                            <span className="w-12 text-center font-medium">{item.quantity}</span>
+                                            <span className="w-12 text-center font-medium text-gray-700">{item.quantity}</span>
                                             <button
                                                 onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                                                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100"
+                                                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100 text-gray-500"
                                             >
                                                 +
                                             </button>
@@ -120,15 +120,18 @@ export default function CartPage() {
                                 </div>
                                 <div className="border-t border-gray-200 pt-3">
                                     <div className="flex justify-between text-lg font-bold">
-                                        <span>Total</span>
-                                        <span>${(getTotalPrice() * 1.1).toFixed(2)}</span>
+                                        <span className="text-gray-900">Total</span>
+                                        <span className="text-gray-900">${(getTotalPrice() * 1.1).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <button className="w-full bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg mb-4">
+                            <Link
+                                href="/checkout"
+                                className="w-full bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg mb-4 block text-center"
+                            >
                                 Proceed to Checkout
-                            </button>
+                            </Link>
 
                             <Link
                                 href="/products"
