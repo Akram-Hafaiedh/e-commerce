@@ -1,7 +1,7 @@
 'use client';
 
-import { CartContextType } from "@/lib/cart";
 import { CartItem } from "@/types/cart";
+import { CartContextType } from "@/lib/cart";
 import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
