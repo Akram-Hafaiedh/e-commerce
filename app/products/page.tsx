@@ -1,13 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { categories } from '@/lib/category';
-import { products } from '@/lib/product';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
+import { Product } from '@/types/product';
+import { Category } from '@/types/category';
+import { products } from '@/lib/product';
+import { categories } from '@/lib/category';
 
 const ITEMS_PER_PAGE = 9; // Changed to 9 to work better with 3 columns
 
 export default function ProductsPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
     // State for filters, search, and pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
@@ -15,10 +21,60 @@ export default function ProductsPage() {
     const [sortBy, setSortBy] = useState('name');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showFilters, setShowFilters] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
+    // Initialize state from URL query parameters
+    useEffect(() => {
+        const filter = searchParams.get('filter');
+        const sort = searchParams.get('sort');
+        const search = searchParams.get('search');
+        const category = searchParams.get('category');
+
+        if (filter) {
+            setActiveFilter(filter);
+            if (filter === 'featured') {
+                setSelectedCategories([]);
+            } else if (filter === 'onSale') {
+                setSelectedCategories([]);
+            }
+        }
+
+        if (sort) {
+            setSortBy(sort);
+        }
+
+        if (search) {
+            setSearchTerm(search);
+        }
+
+        if (category) {
+            setSelectedCategories([category]);
+        }
+    }, [searchParams]);
+
+    // Update URL when filters change
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        if (activeFilter) {
+            params.set('filter', activeFilter);
+        }
+
+        if (searchTerm) params.set('search', searchTerm);
+        if (sortBy && sortBy !== 'name') params.set('sort', sortBy);
+        if (selectedCategories.length === 1) params.set('category', selectedCategories[0]);
+
+        // Only update URL if we have parameters to avoid empty ? 
+        if (params.toString()) {
+            router.replace(`/products?${params.toString()}`, { scroll: false });
+        } else {
+            router.replace('/products', { scroll: false });
+        }
+    }, [searchTerm, sortBy, selectedCategories, activeFilter, router]);
 
     // Calculate price stats for all products
     const priceStats = useMemo(() => {
-        const prices = products.map(p => p.price);
+        const prices = products.map((p: Product) => p.price);
         return {
             min: Math.min(...prices),
             max: Math.max(...prices)
@@ -29,22 +85,36 @@ export default function ProductsPage() {
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
+        // Handle filter query parameters
+        const filter = searchParams.get('filter');
+        if (filter === 'featured') {
+            filtered = filtered.filter((product: Product) => product.featured);
+        } else if (filter === 'onSale') {
+            filtered = filtered.filter((product: Product) => product.onSale);
+        }
+
+        // Handle category query parameter
+        const category = searchParams.get('category');
+        if (category) {
+            filtered = filtered.filter((product: Product) => product.category === category);
+        }
+
         // Search filter
         if (searchTerm) {
-            filtered = filtered.filter(product =>
+            filtered = filtered.filter((product: Product) =>
                 product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 product.description.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
         // Price filter
-        filtered = filtered.filter(product =>
+        filtered = filtered.filter((product: Product) =>
             product.price >= priceRange[0] && product.price <= priceRange[1]
         );
 
-        // Category filter
+        // Category filter (from UI)
         if (selectedCategories.length > 0) {
-            filtered = filtered.filter(product =>
+            filtered = filtered.filter((product: Product) =>
                 selectedCategories.includes(product.category)
             );
         }
@@ -58,13 +128,18 @@ export default function ProductsPage() {
                     return b.price - a.price;
                 case 'name':
                     return a.name.localeCompare(b.name);
+                case 'rating':
+                    return (b.rating || 0) - (a.rating || 0);
+                case 'newest':
+                    // Assuming higher ID means newer product
+                    return parseInt(b.id) - parseInt(a.id);
                 default:
                     return 0;
             }
         });
 
         return filtered;
-    }, [searchTerm, priceRange, sortBy, selectedCategories]);
+    }, [searchTerm, priceRange, sortBy, selectedCategories, searchParams]);
 
     // Pagination logic
     const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
@@ -98,13 +173,18 @@ export default function ProductsPage() {
         setPriceRange([0, priceStats.max]);
         setSortBy('name');
         setSelectedCategories([]);
+        setActiveFilter(null);
         setCurrentPage(1);
+        router.replace('/products', { scroll: false });
     };
 
     // Grid classes based on filter state
     const gridClasses = showFilters
         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" // 3 columns when filters shown
         : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"; // 4 columns when no filters
+
+    // Get active filter from URL for display
+    const activeCategory = searchParams.get('category');
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -113,9 +193,17 @@ export default function ProductsPage() {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">All Products</h1>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                {activeFilter === 'featured' && 'Featured Products'}
+                                {activeFilter === 'onSale' && 'Products on Sale'}
+                                {activeCategory && `${categories.find((c: Category) => c.slug === activeCategory)?.name} Products`}
+                                {!activeFilter && !activeCategory && 'All Products'}
+                            </h1>
                             <p className="text-gray-600">
-                                Discover our wide range of high-quality products at competitive prices.
+                                {activeFilter === 'featured' && 'Handpicked selection of our premium products'}
+                                {activeFilter === 'onSale' && 'Amazing deals and discounts available now'}
+                                {activeCategory && `Explore our ${categories.find((c: Category) => c.slug === activeCategory)?.name?.toLowerCase()} collection`}
+                                {!activeFilter && !activeCategory && 'Discover our wide range of high-quality products at competitive prices.'}
                             </p>
                         </div>
 
@@ -142,8 +230,8 @@ export default function ProductsPage() {
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
                                 className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${showFilters
-                                        ? 'bg-blue-700 text-white'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    ? 'bg-blue-700 text-white'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
                                     }`}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,8 +247,15 @@ export default function ProductsPage() {
                         <span>
                             Showing {startIndex + 1}-{endIndex} of {filteredProducts.length} products
                             {filteredProducts.length !== products.length && ` (filtered from ${products.length} total)`}
+                            {(activeFilter || activeCategory) && (
+                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                    {activeFilter === 'featured' && 'Featured'}
+                                    {activeFilter === 'onSale' && 'On Sale'}
+                                    {activeCategory && `${categories.find((c: Category) => c.slug === activeCategory)?.name}`}
+                                </span>
+                            )}
                         </span>
-                        {filteredProducts.length !== products.length && (
+                        {(filteredProducts.length !== products.length || activeFilter || activeCategory) && (
                             <button
                                 onClick={clearFilters}
                                 className="text-blue-600 hover:text-blue-700 transition-colors mt-2 sm:mt-0 font-medium"
@@ -217,11 +312,13 @@ export default function ProductsPage() {
                                             setSortBy(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                                     >
                                         <option value="name">Name (A-Z)</option>
                                         <option value="price-low">Price (Low to High)</option>
                                         <option value="price-high">Price (High to Low)</option>
+                                        <option value="rating">Highest Rated</option>
+                                        <option value="newest">Newest First</option>
                                     </select>
                                 </div>
 
@@ -229,7 +326,7 @@ export default function ProductsPage() {
                                 <div className="mb-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
                                     <div className="space-y-3">
-                                        {categories.map((category) => (
+                                        {categories.map((category: Category) => (
                                             <label key={category.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                                                 <input
                                                     type="checkbox"
@@ -239,20 +336,54 @@ export default function ProductsPage() {
                                                 />
                                                 <span className="text-gray-700 flex-1">{category.name}</span>
                                                 <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                    {products.filter(p => p.category === category.slug).length}
+                                                    {products.filter((p: Product) => p.category === category.slug).length}
                                                 </span>
                                             </label>
                                         ))}
                                     </div>
                                 </div>
 
+                                {/* Quick Filters */}
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Filters</h3>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setActiveFilter('featured');
+                                                setSelectedCategories([]);
+                                                setSearchTerm('');
+                                                setCurrentPage(1);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeFilter === 'featured'
+                                                ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            ⭐ Featured Products
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setActiveFilter('onSale');
+                                                setSelectedCategories([]);
+                                                setSearchTerm('');
+                                                setCurrentPage(1);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeFilter === 'onSale'
+                                                ? 'bg-red-100 text-red-800 border border-red-300'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            🔥 On Sale
+                                        </button>
+                                    </div>
+                                </div>
                                 {/* Active Filters */}
-                                {(selectedCategories.length > 0 || searchTerm || priceRange[1] < priceStats.max) && (
+                                {(selectedCategories.length > 0 || searchTerm || priceRange[1] < priceStats.max || activeFilter || activeCategory) && (
                                     <div className="border-t pt-4">
                                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Active Filters</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {selectedCategories.map(categorySlug => {
-                                                const category = categories.find(c => c.slug === categorySlug);
+                                                const category = categories.find((c: Category) => c.slug === categorySlug);
                                                 return (
                                                     <span
                                                         key={categorySlug}
@@ -290,6 +421,20 @@ export default function ProductsPage() {
                                                     </button>
                                                 </span>
                                             )}
+                                            {activeFilter && (
+                                                <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                    {activeFilter === 'featured' ? 'Featured' : 'On Sale'}
+                                                    <button
+                                                        onClick={() => {
+                                                            setActiveFilter(null);
+                                                            router.replace('/products', { scroll: false });
+                                                        }}
+                                                        className="text-orange-600 hover:text-orange-800"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -302,7 +447,7 @@ export default function ProductsPage() {
                         {currentProducts.length > 0 ? (
                             <>
                                 <div className={gridClasses}>
-                                    {currentProducts.map((product) => (
+                                    {currentProducts.map((product: Product) => (
                                         <ProductCard key={product.id} product={product} />
                                     ))}
                                 </div>
@@ -324,8 +469,8 @@ export default function ProductsPage() {
                                                     key={page}
                                                     onClick={() => handlePageChange(page)}
                                                     className={`px-4 py-2 border rounded-lg transition-colors ${currentPage === page
-                                                            ? 'bg-blue-600 text-white border-blue-600'
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                        ? 'bg-blue-600 text-white border-blue-600'
+                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                         }`}
                                                 >
                                                     {page}
