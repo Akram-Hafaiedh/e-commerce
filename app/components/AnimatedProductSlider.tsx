@@ -136,21 +136,24 @@ export default function AnimatedProductSlider({
             </>
           )}
 
-        {/* Sliding Products */}
-          <div className="overflow-hidden px-1">
-            <div 
-              className="flex transition-transform duration-500 ease-in-out gap-6"
-              style={{ 
+          {/* Sliding Products */}
+
+          <div className="overflow-hidden">
+            <div
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{
                 transform: `translateX(-${currentIndex * 100}%)`,
+                gap: itemsPerView === 1 ? '0px' : '24px'
               }}
             >
               {products.map((product) => (
-                <div 
+                <div
                   key={product.id}
-                  className="flex-shrink-0 px-0"
-                  style={{ 
-                    width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 24 / itemsPerView}px)`,
-                    marginRight: '24px'
+                  className="flex-shrink-0"
+                  style={{
+                    width: itemsPerView === 1
+                      ? '100%'
+                      : `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 24 / itemsPerView}px)`
                   }}
                 >
                   <ProductCard product={product} />
@@ -167,8 +170,8 @@ export default function AnimatedProductSlider({
                   key={index}
                   onClick={() => goToSlide(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex
-                      ? `${textColor.includes('white') ? 'bg-white' : 'bg-gray-900'} scale-125`
-                      : 'bg-gray-300 hover:bg-gray-400'
+                    ? `${textColor.includes('white') ? 'bg-white' : 'bg-gray-900'} scale-125`
+                    : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
