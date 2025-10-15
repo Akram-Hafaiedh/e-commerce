@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { categories } from '@/lib/data';
+import { categories } from '@/lib/category';
 
 export default function CategoriesPage() {
     return (
@@ -22,8 +22,8 @@ export default function CategoriesPage() {
                             className="group block"
                         >
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:translate-y-[-4px]">
-                                <div className="h-48 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative">
-                                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <div className="h-68 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative">
+                                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
                                         <span className="text-2xl">🛍️</span>
                                     </div>
                                 </div>

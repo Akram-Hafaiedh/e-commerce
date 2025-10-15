@@ -1,7 +1,7 @@
 'use client';
 
 import { useCart } from "@/app/context/CartContext";
-import { Category, Product, products } from "@/lib/data";
+import { Category, Product, products } from "@/lib/category";
 import Link from "next/link";
 import { useState } from "react";
 

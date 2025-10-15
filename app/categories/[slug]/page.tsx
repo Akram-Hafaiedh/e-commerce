@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { products, categories } from '@/lib/data';
+import { products, categories } from '@/lib/category';
 import { notFound, useParams } from 'next/navigation';
 import ProductCard from '../../components/ProductCard';
 import Link from 'next/link';

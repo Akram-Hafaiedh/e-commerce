@@ -3,43 +3,17 @@ export interface Product {
     name: string;
     description: string;
     price: number;
+    originalPrice?: number;
     image: string;
     category: string;
     slug: string;
+    featured: boolean;
+    onSale: boolean;
+    rating?: number;
+    stock: number;
 }
 
-export interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-    image: string;
-}
 
-// Sample data - in a real app, this would come from a database or CMS
-export const categories: Category[] = [
-    {
-        id: '1',
-        name: 'Electronics',
-        slug: 'electronics',
-        description: 'Latest gadgets and electronics',
-        image: '/images/electronics.jpg',
-    },
-    {
-        id: '2',
-        name: 'Clothing',
-        slug: 'clothing',
-        description: 'Fashionable clothing for everyone',
-        image: '/images/clothing.jpg',
-    },
-    {
-        id: '3',
-        name: 'Home & Garden',
-        slug: 'home-garden',
-        description: 'Everything for your home',
-        image: '/images/home-garden.jpg',
-    },
-];
 
 export const products: Product[] = [
     {
@@ -47,9 +21,14 @@ export const products: Product[] = [
         name: 'Wireless Headphones',
         description: 'High-quality wireless headphones with noise cancellation',
         price: 199.99,
+        originalPrice: 249.99,
         image: '/images/headphones.jpg',
         category: 'electronics',
         slug: 'wireless-headphones',
+        featured: true,
+        onSale: true,
+        rating: 4.8,
+        stock: 15
     },
     {
         id: '2',
@@ -58,16 +37,25 @@ export const products: Product[] = [
         price: 899.99,
         image: '/images/smartphone.jpg',
         category: 'electronics',
-        slug: 'smartphone',
+        slug: 'smartphone-pro',
+        featured: true,
+        onSale: false,
+        rating: 4.9,
+        stock: 8
     },
     {
         id: '3',
         name: '4K Smart TV',
         description: 'Ultra HD Smart TV with vibrant colors and smart features',
         price: 1299.99,
+        originalPrice: 1599.99,
         image: '/images/smart-tv.jpg',
         category: 'electronics',
         slug: '4k-smart-tv',
+        featured: true,
+        onSale: true,
+        rating: 4.7,
+        stock: 5
     },
     {
         id: '4',
@@ -77,6 +65,10 @@ export const products: Product[] = [
         image: '/images/bluetooth-speaker.jpg',
         category: 'electronics',
         slug: 'bluetooth-speaker',
+        featured: false,
+        onSale: false,
+        rating: 4.4,
+        stock: 20
     },
     {
         id: '5',
@@ -86,6 +78,10 @@ export const products: Product[] = [
         image: '/images/laptop.jpg',
         category: 'electronics',
         slug: 'laptop',
+        featured: true,
+        onSale: false,
+        rating: 4.6,
+        stock: 12
     },
     {
         id: '6',
@@ -95,6 +91,10 @@ export const products: Product[] = [
         image: '/images/smartwatch.jpg',
         category: 'electronics',
         slug: 'smartwatch',
+        featured: false,
+        onSale: false,
+        rating: 4.2,
+        stock: 30
     },
     {
         id: '7',
@@ -104,6 +104,10 @@ export const products: Product[] = [
         image: '/images/wireless-mouse.jpg',
         category: 'electronics',
         slug: 'wireless-mouse',
+        featured: false,
+        onSale: false,
+        rating: 4.1,
+        stock: 40
     },
     {
         id: '8',
@@ -113,6 +117,10 @@ export const products: Product[] = [
         image: '/images/mechanical-keyboard.jpg',
         category: 'electronics',
         slug: 'mechanical-keyboard',
+        featured: true,
+        onSale: false,
+        rating: 4.5,
+        stock: 22
     },
     {
         id: '9',
@@ -122,15 +130,24 @@ export const products: Product[] = [
         image: '/images/gaming-console.jpg',
         category: 'electronics',
         slug: 'gaming-console',
+        featured: true,
+        onSale: false,
+        rating: 4.9,
+        stock: 7
     },
     {
         id: '10',
         name: 'Cotton T-Shirt',
         description: 'Comfortable cotton t-shirt in various colors',
         price: 29.99,
+        originalPrice: 39.99,
         image: '/images/tshirt.jpg',
         category: 'clothing',
         slug: 'cotton-tshirt',
+        featured: false,
+        onSale: true,
+        rating: 4.3,
+        stock: 50
     },
     {
         id: '11',
@@ -140,15 +157,23 @@ export const products: Product[] = [
         image: '/images/jeans.jpg',
         category: 'clothing',
         slug: 'denim-jeans',
+        featured: true,
+        onSale: false,
+        rating: 4.7,
+        stock: 25
     },
     {
-        id: '12',
-        name: 'Hoodie',
-        description: 'Soft and warm hoodie perfect for chilly days',
-        price: 49.99,
+        id: '11',
+        name: 'Designer Hoodie',
+        description: 'Premium quality hoodie with unique design',
+        price: 79.99,
         image: '/images/hoodie.jpg',
         category: 'clothing',
-        slug: 'hoodie',
+        slug: 'designer-hoodie',
+        featured: true,
+        onSale: false,
+        rating: 4.7,
+        stock: 25
     },
     {
         id: '13',
@@ -158,6 +183,10 @@ export const products: Product[] = [
         image: '/images/leather-jacket.jpg',
         category: 'clothing',
         slug: 'leather-jacket',
+        featured: false,
+        onSale: false,
+        rating: 4.8,
+        stock: 10
     },
     {
         id: '14',
@@ -167,15 +196,24 @@ export const products: Product[] = [
         image: '/images/sneakers.jpg',
         category: 'clothing',
         slug: 'sneakers',
+        featured: true,
+        onSale: false,
+        rating: 4.5,
+        stock: 35
     },
     {
         id: '15',
         name: 'Summer Dress',
         description: 'Elegant floral summer dress for women',
         price: 69.99,
+        originalPrice: 89.99,
         image: '/images/summer-dress.jpg',
         category: 'clothing',
         slug: 'summer-dress',
+        featured: true,
+        onSale: true,
+        rating: 4.5,
+        stock: 18
     },
     {
         id: '16',
@@ -185,6 +223,10 @@ export const products: Product[] = [
         image: '/images/scarf.jpg',
         category: 'clothing',
         slug: 'wool-scarf',
+        featured: false,
+        onSale: false,
+        rating: 4.3,
+        stock: 40
     },
     {
         id: '17',
@@ -194,6 +236,10 @@ export const products: Product[] = [
         image: '/images/cap.jpg',
         category: 'clothing',
         slug: 'baseball-cap',
+        featured: false,
+        onSale: false,
+        rating: 4.0,
+        stock: 60
     },
     {
         id: '18',
@@ -203,6 +249,10 @@ export const products: Product[] = [
         image: '/images/winter-coat.jpg',
         category: 'clothing',
         slug: 'winter-coat',
+        featured: true,
+        onSale: false,
+        rating: 4.6,
+        stock: 14
     },
 
     {
@@ -210,18 +260,27 @@ export const products: Product[] = [
         name: 'Garden Tools Set',
         description: 'Complete set of gardening tools',
         price: 149.99,
+        originalPrice: 199.99,
         image: '/images/garden-tools.jpg',
         category: 'home-garden',
         slug: 'garden-tools-set',
+        featured: true,
+        onSale: true,
+        rating: 4.8,
+        stock: 10
     },
     {
         id: '20',
-        name: 'Scented Candle',
-        description: 'Relaxing lavender-scented candle for your home',
-        price: 14.99,
+        name: 'Scented Candle Set',
+        description: 'Luxury scented candles in elegant packaging',
+        price: 34.99,
         image: '/images/scented-candle.jpg',
         category: 'home-garden',
-        slug: 'scented-candle',
+        slug: 'scented-candle-set',
+        featured: true,
+        onSale: false,
+        rating: 4.6,
+        stock: 30
     },
     {
         id: '21',
@@ -231,6 +290,10 @@ export const products: Product[] = [
         image: '/images/decorative-plant.jpg',
         category: 'home-garden',
         slug: 'decorative-plant',
+        featured: false,
+        onSale: false,
+        rating: 4.2,
+        stock: 25
     },
     {
         id: '22',
@@ -240,15 +303,24 @@ export const products: Product[] = [
         image: '/images/wall-clock.jpg',
         category: 'home-garden',
         slug: 'wall-clock',
+        featured: false,
+        onSale: false,
+        rating: 4.3,
+        stock: 20
     },
     {
         id: '23',
-        name: 'Coffee Maker',
-        description: 'Automatic drip coffee maker with timer',
+        name: 'Coffee Maker Deluxe',
+        description: 'Automatic drip coffee maker with timer and grinder',
         price: 89.99,
+        originalPrice: 129.99,
         image: '/images/coffee-maker.jpg',
         category: 'home-garden',
-        slug: 'coffee-maker',
+        slug: 'coffee-maker-deluxe',
+        featured: false,
+        onSale: true,
+        rating: 4.4,
+        stock: 15
     },
     {
         id: '24',
@@ -258,6 +330,10 @@ export const products: Product[] = [
         image: '/images/vacuum-cleaner.jpg',
         category: 'home-garden',
         slug: 'vacuum-cleaner',
+        featured: true,
+        onSale: false,
+        rating: 4.5,
+        stock: 18
     },
     {
         id: '25',
@@ -267,6 +343,10 @@ export const products: Product[] = [
         image: '/images/cookware-set.jpg',
         category: 'home-garden',
         slug: 'cookware-set',
+        featured: true,
+        onSale: false,
+        rating: 4.7,
+        stock: 12
     },
     {
         id: '26',
@@ -276,6 +356,10 @@ export const products: Product[] = [
         image: '/images/table-lamp.jpg',
         category: 'home-garden',
         slug: 'table-lamp',
+        featured: false,
+        onSale: false,
+        rating: 4.3,
+        stock: 28
     },
     {
         id: '27',
@@ -285,5 +369,9 @@ export const products: Product[] = [
         image: '/images/rug.jpg',
         category: 'home-garden',
         slug: 'rug-carpet',
+        featured: true,
+        onSale: false,
+        rating: 4.6,
+        stock: 10
     },
 ];
