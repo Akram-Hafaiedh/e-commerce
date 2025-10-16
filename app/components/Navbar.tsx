@@ -3,14 +3,27 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '../context/CartContext';
+import { useEffect, useState } from 'react';
 
 export default function Navbar() {
     const pathname = usePathname();
-
     const { getTotalItems } = useCart();
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
-        <nav className="bg-white shadow-lg border-b border-gray-200">
+        <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+                ? 'bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50'
+                : 'bg-white shadow-lg border-b border-gray-200'
+            }`}>
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
