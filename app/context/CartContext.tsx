@@ -4,10 +4,13 @@ import { CartItem } from "@/types/cart";
 import { CartContextType } from "@/lib/cart";
 import { createContext, useContext, useEffect, useState } from "react";
 import { Order } from "@/types/order";
+import { useToast } from "./ToastContext";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+
+    const { showToast } = useToast();
     const [items, setItems] = useState<CartItem[]>([]);
 
     useEffect(() => {
@@ -34,6 +37,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 return [...prevItems, { product, quantity }];
             }
         });
+
+        showToast(`${product.name} added to cart`, 'success');
     }
 
     const removeFromCart = (productId: string) => {
