@@ -13,3 +13,9 @@ export interface CartContextType {
     orders: Order[];
     addOrder: (order: Omit<Order, 'id'>) => void;
 }
+
+
+export interface CartDropdownProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
