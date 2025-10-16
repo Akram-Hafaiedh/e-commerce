@@ -39,22 +39,48 @@ export default function CartPage() {
                         </Link>
                     </div>
 
-                    {/* Feature Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center hover:shadow-lg transition-shadow">
-                            <div className="text-4xl mb-3">🚚</div>
-                            <h3 className="font-semibold text-gray-900 mb-2">Free Shipping</h3>
-                            <p className="text-gray-600 text-sm">On orders over $50</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center hover:shadow-lg transition-shadow">
-                            <div className="text-4xl mb-3">💳</div>
-                            <h3 className="font-semibold text-gray-900 mb-2">Secure Payment</h3>
-                            <p className="text-gray-600 text-sm">100% secure checkout</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center hover:shadow-lg transition-shadow">
-                            <div className="text-4xl mb-3">↩️</div>
-                            <h3 className="font-semibold text-gray-900 mb-2">Easy Returns</h3>
-                            <p className="text-gray-600 text-sm">30-day return policy</p>
+                    {/* Enhanced Feature Section - Smaller Version */}
+                    <div className="mt-12">
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
+                            <h2 className="text-2xl font-bold text-center mb-8">
+                                Why Shop With Us?
+                            </h2>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/15 transition-all duration-300">
+                                    <div className="text-3xl mb-3 transform hover:scale-105 transition-transform">🚚</div>
+                                    <h3 className="font-bold mb-2">Free Shipping</h3>
+                                    <p className="text-blue-100 text-sm">On orders over $50</p>
+                                </div>
+                                
+                                <div className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/15 transition-all duration-300">
+                                    <div className="text-3xl mb-3 transform hover:scale-105 transition-transform">💳</div>
+                                    <h3 className="font-bold mb-2">Secure Payment</h3>
+                                    <p className="text-blue-100 text-sm">100% secure checkout</p>
+                                </div>
+                                
+                                <div className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/15 transition-all duration-300">
+                                    <div className="text-3xl mb-3 transform hover:scale-105 transition-transform">↩️</div>
+                                    <h3 className="font-bold mb-2">Easy Returns</h3>
+                                    <p className="text-blue-100 text-sm">30-day return policy</p>
+                                </div>
+                            </div>
+
+                            {/* Additional Call to Action */}
+                            <div className="text-center pt-6 border-t border-white/20">
+                                <p className="text-blue-100 mb-4">
+                                    Ready to explore our collection?
+                                </p>
+                                <Link
+                                    href="/products"
+                                    className="inline-flex items-center justify-center bg-white text-blue-600 hover:text-blue-700 px-6 py-3 rounded-lg transition-all transform hover:scale-105 font-semibold text-sm shadow-md hover:shadow-lg"
+                                >
+                                    Browse All Products
+                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
