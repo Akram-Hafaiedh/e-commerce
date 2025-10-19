@@ -1,10 +1,9 @@
 'use client';
 
-import { CartDropdownProps } from "@/lib/cart";
 import { useCart } from "../context/CartContext";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { CartItem } from "@/types/cart";
+import { CartDropdownProps, CartItem } from "@/types/cart";
 
 export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
 
