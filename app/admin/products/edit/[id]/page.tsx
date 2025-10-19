@@ -13,24 +13,27 @@ export default function EditProductPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await fetch(`/api/products/${params.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setProduct(data);
+                }
+            } catch (error) {
+                console.error('Error fetching product:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         if (params.id && isAdmin && !isLoading) {
             fetchProduct();
+        } else if (!isLoading && !isAdmin) {
+            setLoading(false);
         }
     }, [params.id, isAdmin, isLoading]);
 
-    const fetchProduct = async () => {
-        try {
-            const response = await fetch(`/api/products/${params.id}`);
-            if (response.ok) {
-                const data = await response.json();
-                setProduct(data);
-            }
-        } catch (error) {
-            console.error('Error fetching product:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     if (isLoading || loading) {
         return (
