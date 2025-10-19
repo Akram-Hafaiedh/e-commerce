@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
 
 export default function UserDropdown() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { user, signOut } = useAuth();
+    const { user, signOut, isAdmin } = useAuth(); // Use isAdmin from useAuth
     const router = useRouter();
-    const pathname = usePathname();
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -55,11 +54,11 @@ export default function UserDropdown() {
             >
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
-                        {user?.name?.charAt(0).toUpperCase()}
+                        {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
                     </span>
                 </div>
                 <span className="hidden md:block text-sm font-medium">
-                    {user?.name}
+                    {user?.name || user?.email}
                 </span>
                 <svg
                     className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -75,10 +74,10 @@ export default function UserDropdown() {
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                        <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
                         <p className="text-sm text-gray-500">{user?.email}</p>
                         <p className="text-xs text-blue-600 mt-1">
-                            {user?.role === 'ADMIN' ? 'Administrator' : 'Customer'}
+                            {isAdmin ? 'Administrator' : 'Customer'}
                         </p>
                     </div>
 
@@ -96,10 +95,11 @@ export default function UserDropdown() {
                         My Orders
                     </button>
 
-                    {user?.role === 'admin' && (
+                    {/* Fixed condition - use isAdmin from useAuth hook */}
+                    {isAdmin && (
                         <button
                             onClick={handleAdmin}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
                         >
                             Admin Dashboard
                         </button>
