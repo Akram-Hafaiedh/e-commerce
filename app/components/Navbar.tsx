@@ -1,3 +1,4 @@
+// components/Navbar.tsx
 'use client';
 
 import Link from 'next/link';
@@ -5,10 +6,15 @@ import { usePathname } from 'next/navigation';
 import { useCart } from '../context/CartContext';
 import { useEffect, useRef, useState } from 'react';
 import CartDropdown from './CartDropdown';
+import { useAuth } from '../hooks/useAuth';
+import UserDropdown from './UserDropdown';
+import AuthDropdown from './AuthDropdown';
 
 export default function Navbar() {
     const pathname = usePathname();
     const { getTotalItems } = useCart();
+    const { user, isAuthenticated, isLoading } = useAuth();
+    
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const cartButtonRef = useRef<HTMLButtonElement>(null);
@@ -20,6 +26,18 @@ export default function Navbar() {
 
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Close cart dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (cartButtonRef.current && !cartButtonRef.current.contains(event.target as Node)) {
+                setIsCartOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleCartClick = () => {
@@ -72,6 +90,19 @@ export default function Navbar() {
                         >
                             Categories
                         </Link>
+                        
+                        {/* Admin Link - Only show for admin users */}
+                        {isAuthenticated && user?.role === 'admin' && (
+                            <Link
+                                href="/admin"
+                                className={`${pathname.startsWith('/admin')
+                                    ? 'text-blue-600 border-b-2 border-blue-600'
+                                    : 'text-gray-700 hover:text-blue-600'
+                                    } font-medium transition-colors`}
+                            >
+                                Admin
+                            </Link>
+                        )}
                     </div>
 
                     {/* Right side icons */}
@@ -81,6 +112,8 @@ export default function Navbar() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </button>
+                        
+                        {/* Cart */}
                         <button
                             ref={cartButtonRef}
                             onClick={handleCartClick}
@@ -95,15 +128,20 @@ export default function Navbar() {
                                 </span>
                             )}
                         </button>
+                        
                         <CartDropdown
                             isOpen={isCartOpen}
                             onClose={handleCloseCart}
                         />
-                        <button className="p-2 text-gray-700 hover:text-blue-600 transition-colors">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </button>
+
+                        {/* Single Authentication Dropdown */}
+                        {isLoading ? (
+                            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                        ) : isAuthenticated ? (
+                            <UserDropdown />
+                        ) : (
+                            <AuthDropdown />
+                        )}
                     </div>
                 </div>
             </div>
