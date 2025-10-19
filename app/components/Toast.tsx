@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface ToastProps {
     message: string;
@@ -19,22 +19,7 @@ export default function Toast({
     const [shouldRender, setShouldRender] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
 
-    useEffect(() => {
-        if (isVisible) {
-            setShouldRender(true);
-            // Trigger enter animation
-            setTimeout(() => setIsAnimating(true), 10);
-            
-            // Auto-hide timer
-            const timer = setTimeout(() => {
-                handleClose();
-            }, duration);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [isVisible, duration]);
-
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         // Trigger exit animation
         setIsAnimating(false);
         // Remove from DOM after animation completes
@@ -42,7 +27,25 @@ export default function Toast({
             setShouldRender(false);
             onClose();
         }, 300);
-    };
+    }, [onClose]);
+
+
+    useEffect(() => {
+        if (isVisible) {
+            setShouldRender(true);
+            // Trigger enter animation
+            setTimeout(() => setIsAnimating(true), 10);
+
+            // Auto-hide timer
+            const timer = setTimeout(() => {
+                handleClose();
+            }, duration);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isVisible, duration, handleClose]);
+
+
 
     if (!shouldRender) return null;
 
@@ -74,12 +77,11 @@ export default function Toast({
 
     return (
         <div className="fixed top-4 right-4 z-50">
-            <div 
-                className={`${getBackgroundColor()} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm transition-all duration-300 ease-out ${
-                    isAnimating 
-                        ? 'translate-x-0 opacity-100 scale-100' 
-                        : 'translate-x-full opacity-0 scale-95'
-                }`}
+            <div
+                className={`${getBackgroundColor()} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm transition-all duration-300 ease-out ${isAnimating
+                    ? 'translate-x-0 opacity-100 scale-100'
+                    : 'translate-x-full opacity-0 scale-95'
+                    }`}
             >
                 <span className="text-lg">{getIcon()}</span>
                 <span className="font-medium">{message}</span>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useParams } from 'next/navigation';
 import { Category } from '@/types/category';
@@ -11,27 +11,27 @@ export default function EditCategoryPage() {
     const [category, setCategory] = useState<Category | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchCategory = async () => {
-            try {
-                const response = await fetch(`/api/categories/${params.id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setCategory(data);
-                }
-            } catch (error) {
-                console.error('Error fetching category:', error);
-            } finally {
-                setLoading(false);
+    const fetchCategory = useCallback(async () => {
+        try {
+            const response = await fetch(`/api/categories/${params.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setCategory(data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching category:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [params.id]);
 
+    useEffect(() => {
         if (params.id && isAdmin && !isLoading) {
             fetchCategory();
         } else if (!isLoading && !isAdmin) {
             setLoading(false);
         }
-    }, [params.id, isAdmin, isLoading]);
+    }, [params.id, isAdmin, isLoading, fetchCategory]);
 
     if (isLoading || loading) {
         return (

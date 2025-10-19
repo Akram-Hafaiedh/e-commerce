@@ -6,7 +6,7 @@ import { useAuth } from '@/app/hooks/useAuth';
 import { Order } from '@/types/order';
 
 export default function OrdersPage() {
-    const { user, isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
     const [orders, setOrders] = useState<Order[]>([]);
 

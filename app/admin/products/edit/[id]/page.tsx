@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useParams } from 'next/navigation';
 import ProductForm from '@/app/components/forms/ProductForm';
@@ -12,27 +12,27 @@ export default function EditProductPage() {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchProduct = async () => {
-            try {
-                const response = await fetch(`/api/products/${params.id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setProduct(data);
-                }
-            } catch (error) {
-                console.error('Error fetching product:', error);
-            } finally {
-                setLoading(false);
+    const fetchProduct = useCallback(async () => {
+        try {
+            const response = await fetch(`/api/products/${params.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setProduct(data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching product:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [params.id]);
 
+    useEffect(() => {
         if (params.id && isAdmin && !isLoading) {
             fetchProduct();
         } else if (!isLoading && !isAdmin) {
             setLoading(false);
         }
-    }, [params.id, isAdmin, isLoading]);
+    }, [params.id, isAdmin, isLoading, fetchProduct]);
 
 
     if (isLoading || loading) {
