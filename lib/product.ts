@@ -9,12 +9,15 @@ export const products: Product[] = [
         originalPrice: 249.99,
         image: '/images/headphones.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'wireless-headphones',
         featured: true,
         onSale: true,
         rating: 4.8,
         reviewCount: 124,
-        stock: 15
+        stock: 15,
+        createdAt: new Date('2024-01-15').toISOString(),
+        updatedAt: new Date('2024-01-15').toISOString()
     },
     {
         id: '2',
@@ -23,12 +26,15 @@ export const products: Product[] = [
         price: 899.99,
         image: '/images/smartphone.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'smartphone-pro',
         featured: true,
         onSale: false,
         rating: 4.9,
         reviewCount: 78,
-        stock: 8
+        stock: 8,
+        createdAt: new Date('2024-01-16').toISOString(),
+        updatedAt: new Date('2024-01-16').toISOString()
     },
     {
         id: '3',
@@ -38,12 +44,15 @@ export const products: Product[] = [
         originalPrice: 1599.99,
         image: '/images/smart-tv.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: '4k-smart-tv',
         featured: true,
         onSale: true,
         rating: 4.7,
         reviewCount: 32,
-        stock: 5
+        stock: 5,
+        createdAt: new Date('2024-01-17').toISOString(),
+        updatedAt: new Date('2024-01-17').toISOString()
     },
     {
         id: '4',
@@ -52,12 +61,15 @@ export const products: Product[] = [
         price: 99.99,
         image: '/images/bluetooth-speaker.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'bluetooth-speaker',
         featured: false,
         onSale: false,
         rating: 4.4,
         reviewCount: 24,
-        stock: 20
+        stock: 20,
+        createdAt: new Date('2024-01-18').toISOString(),
+        updatedAt: new Date('2024-01-18').toISOString()
     },
     {
         id: '5',
@@ -66,12 +78,15 @@ export const products: Product[] = [
         price: 1199.99,
         image: '/images/laptop.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'laptop',
         featured: true,
         onSale: false,
         rating: 4.6,
         reviewCount: 16,
-        stock: 12
+        stock: 12,
+        createdAt: new Date('2024-01-19').toISOString(),
+        updatedAt: new Date('2024-01-19').toISOString()
     },
     {
         id: '6',
@@ -80,12 +95,15 @@ export const products: Product[] = [
         price: 249.99,
         image: '/images/smartwatch.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'smartwatch',
         featured: false,
         onSale: false,
         rating: 4.2,
         reviewCount: 8,
-        stock: 30
+        stock: 30,
+        createdAt: new Date('2024-01-20').toISOString(),
+        updatedAt: new Date('2024-01-20').toISOString()
     },
     {
         id: '7',
@@ -94,12 +112,15 @@ export const products: Product[] = [
         price: 39.99,
         image: '/images/wireless-mouse.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'wireless-mouse',
         featured: false,
         onSale: false,
         rating: 4.1,
         reviewCount: 6,
-        stock: 40
+        stock: 40,
+        createdAt: new Date('2024-01-21').toISOString(),
+        updatedAt: new Date('2024-01-21').toISOString()
     },
     {
         id: '8',
@@ -108,12 +129,15 @@ export const products: Product[] = [
         price: 129.99,
         image: '/images/mechanical-keyboard.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'mechanical-keyboard',
         featured: true,
         onSale: false,
         rating: 4.5,
         reviewCount: 12,
-        stock: 22
+        stock: 22,
+        createdAt: new Date('2024-01-22').toISOString(),
+        updatedAt: new Date('2024-01-22').toISOString()
     },
     {
         id: '9',
@@ -122,12 +146,15 @@ export const products: Product[] = [
         price: 599.99,
         image: '/images/gaming-console.jpg',
         category: 'electronics',
+        categoryId: '1',
         slug: 'gaming-console',
         featured: true,
         onSale: false,
         rating: 4.9,
         reviewCount: 36,
-        stock: 7
+        stock: 7,
+        createdAt: new Date('2024-01-23').toISOString(),
+        updatedAt: new Date('2024-01-23').toISOString()
     },
     {
         id: '10',
@@ -137,12 +164,15 @@ export const products: Product[] = [
         originalPrice: 39.99,
         image: '/images/tshirt.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'cotton-tshirt',
         featured: false,
         onSale: true,
         rating: 4.3,
         reviewCount: 18,
-        stock: 50
+        stock: 50,
+        createdAt: new Date('2024-01-24').toISOString(),
+        updatedAt: new Date('2024-01-24').toISOString()
     },
     {
         id: '11',
@@ -151,12 +181,15 @@ export const products: Product[] = [
         price: 59.99,
         image: '/images/jeans.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'denim-jeans',
         featured: true,
         onSale: false,
         rating: 4.7,
         reviewCount: 12,
-        stock: 25
+        stock: 25,
+        createdAt: new Date('2024-01-25').toISOString(),
+        updatedAt: new Date('2024-01-25').toISOString()
     },
     {
         id: '12',
@@ -165,12 +198,15 @@ export const products: Product[] = [
         price: 79.99,
         image: '/images/hoodie.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'designer-hoodie',
         featured: true,
         onSale: false,
         rating: 4.7,
         reviewCount: 12,
-        stock: 25
+        stock: 25,
+        createdAt: new Date('2024-01-26').toISOString(),
+        updatedAt: new Date('2024-01-26').toISOString()
     },
     {
         id: '13',
@@ -179,12 +215,15 @@ export const products: Product[] = [
         price: 199.99,
         image: '/images/leather-jacket.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'leather-jacket',
         featured: false,
         onSale: false,
         rating: 4.8,
         reviewCount: 8,
-        stock: 10
+        stock: 10,
+        createdAt: new Date('2024-01-27').toISOString(),
+        updatedAt: new Date('2024-01-27').toISOString()
     },
     {
         id: '14',
@@ -193,12 +232,15 @@ export const products: Product[] = [
         price: 89.99,
         image: '/images/sneakers.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'sneakers',
         featured: true,
         onSale: false,
         rating: 4.5,
         reviewCount: 14,
-        stock: 35
+        stock: 35,
+        createdAt: new Date('2024-01-28').toISOString(),
+        updatedAt: new Date('2024-01-28').toISOString()
     },
     {
         id: '15',
@@ -208,12 +250,15 @@ export const products: Product[] = [
         originalPrice: 89.99,
         image: '/images/summer-dress.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'summer-dress',
         featured: true,
         onSale: true,
         rating: 4.5,
         reviewCount: 16,
-        stock: 18
+        stock: 18,
+        createdAt: new Date('2024-01-29').toISOString(),
+        updatedAt: new Date('2024-01-29').toISOString()
     },
     {
         id: '16',
@@ -222,12 +267,15 @@ export const products: Product[] = [
         price: 24.99,
         image: '/images/scarf.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'wool-scarf',
         featured: false,
         onSale: false,
         rating: 4.3,
         reviewCount: 10,
-        stock: 40
+        stock: 40,
+        createdAt: new Date('2024-01-30').toISOString(),
+        updatedAt: new Date('2024-01-30').toISOString()
     },
     {
         id: '17',
@@ -236,12 +284,15 @@ export const products: Product[] = [
         price: 19.99,
         image: '/images/cap.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'baseball-cap',
         featured: false,
         onSale: false,
         rating: 4.0,
         reviewCount: 6,
-        stock: 60
+        stock: 60,
+        createdAt: new Date('2024-01-31').toISOString(),
+        updatedAt: new Date('2024-01-31').toISOString()
     },
     {
         id: '18',
@@ -250,14 +301,16 @@ export const products: Product[] = [
         price: 179.99,
         image: '/images/winter-coat.jpg',
         category: 'clothing',
+        categoryId: '2',
         slug: 'winter-coat',
         featured: true,
         onSale: false,
         rating: 4.6,
         reviewCount: 8,
-        stock: 14
+        stock: 14,
+        createdAt: new Date('2024-02-01').toISOString(),
+        updatedAt: new Date('2024-02-01').toISOString()
     },
-
     {
         id: '19',
         name: 'Garden Tools Set',
@@ -266,12 +319,15 @@ export const products: Product[] = [
         originalPrice: 199.99,
         image: '/images/garden-tools.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'garden-tools-set',
         featured: true,
         onSale: true,
         rating: 4.8,
         reviewCount: 12,
-        stock: 10
+        stock: 10,
+        createdAt: new Date('2024-02-02').toISOString(),
+        updatedAt: new Date('2024-02-02').toISOString()
     },
     {
         id: '20',
@@ -280,12 +336,15 @@ export const products: Product[] = [
         price: 34.99,
         image: '/images/scented-candle.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'scented-candle-set',
         featured: true,
         onSale: false,
         rating: 4.6,
         reviewCount: 10,
-        stock: 30
+        stock: 30,
+        createdAt: new Date('2024-02-03').toISOString(),
+        updatedAt: new Date('2024-02-03').toISOString()
     },
     {
         id: '21',
@@ -294,12 +353,15 @@ export const products: Product[] = [
         price: 29.99,
         image: '/images/decorative-plant.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'decorative-plant',
         featured: false,
         onSale: false,
         rating: 4.2,
         reviewCount: 8,
-        stock: 25
+        stock: 25,
+        createdAt: new Date('2024-02-04').toISOString(),
+        updatedAt: new Date('2024-02-04').toISOString()
     },
     {
         id: '22',
@@ -308,12 +370,15 @@ export const products: Product[] = [
         price: 39.99,
         image: '/images/wall-clock.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'wall-clock',
         featured: false,
         onSale: false,
         rating: 4.3,
         reviewCount: 9,
-        stock: 20
+        stock: 20,
+        createdAt: new Date('2024-02-05').toISOString(),
+        updatedAt: new Date('2024-02-05').toISOString()
     },
     {
         id: '23',
@@ -323,12 +388,15 @@ export const products: Product[] = [
         originalPrice: 129.99,
         image: '/images/coffee-maker.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'coffee-maker-deluxe',
         featured: false,
         onSale: true,
         rating: 4.4,
         reviewCount: 11,
-        stock: 15
+        stock: 15,
+        createdAt: new Date('2024-02-06').toISOString(),
+        updatedAt: new Date('2024-02-06').toISOString()
     },
     {
         id: '24',
@@ -337,12 +405,15 @@ export const products: Product[] = [
         price: 249.99,
         image: '/images/vacuum-cleaner.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'vacuum-cleaner',
         featured: true,
         onSale: false,
         rating: 4.5,
         reviewCount: 14,
-        stock: 18
+        stock: 18,
+        createdAt: new Date('2024-02-07').toISOString(),
+        updatedAt: new Date('2024-02-07').toISOString()
     },
     {
         id: '25',
@@ -351,12 +422,15 @@ export const products: Product[] = [
         price: 179.99,
         image: '/images/cookware-set.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'cookware-set',
         featured: true,
         onSale: false,
         rating: 4.7,
         reviewCount: 16,
-        stock: 12
+        stock: 12,
+        createdAt: new Date('2024-02-08').toISOString(),
+        updatedAt: new Date('2024-02-08').toISOString()
     },
     {
         id: '26',
@@ -365,12 +439,15 @@ export const products: Product[] = [
         price: 49.99,
         image: '/images/table-lamp.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'table-lamp',
         featured: false,
         onSale: false,
         rating: 4.3,
         reviewCount: 7,
-        stock: 28
+        stock: 28,
+        createdAt: new Date('2024-02-09').toISOString(),
+        updatedAt: new Date('2024-02-09').toISOString()
     },
     {
         id: '27',
@@ -379,11 +456,14 @@ export const products: Product[] = [
         price: 99.99,
         image: '/images/rug.jpg',
         category: 'home-garden',
+        categoryId: '3',
         slug: 'rug-carpet',
         featured: true,
         onSale: false,
         rating: 4.6,
         reviewCount: 13,
-        stock: 10
+        stock: 10,
+        createdAt: new Date('2024-02-10').toISOString(),
+        updatedAt: new Date('2024-02-10').toISOString()
     },
 ];
