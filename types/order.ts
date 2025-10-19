@@ -1,10 +1,17 @@
-import { CartItem } from "./cart";
+import { Product } from "./product";
+
+export interface OrderItem {
+    id: string;
+    product: Product;
+    quantity: number;
+    price: number;
+}
 
 export interface Order {
     id: string;
     date: string;
-    status: 'delivered' | 'processing' | 'shipped' | 'cancelled';
-    items: CartItem[];
+    status: 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+    items: OrderItem[];
     total: number;
     shippingAddress: {
         firstName: string;
@@ -18,4 +25,7 @@ export interface Order {
         cardEnding: string;
         expiryDate: string;
     };
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
 }

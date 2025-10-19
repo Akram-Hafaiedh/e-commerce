@@ -6,11 +6,13 @@ export interface Product {
     originalPrice?: number;
     image: string;
     category: string;
+    categoryId: string;
     slug: string;
     featured: boolean;
     onSale: boolean;
     rating?: number;
     reviewCount: number;
     stock: number;
-    createdAt?: string;
+    createdAt: string;
+    updatedAt: string;
 }
