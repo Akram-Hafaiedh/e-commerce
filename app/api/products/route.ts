@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { requireAdmin } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,83 +69,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const auth = await requireAdmin();
-    if (auth.error) {
-      return auth.error;
-    }
-
-    const body = await request.json();
-    const {
-      name,
-      description,
-      price,
-      originalPrice,
-      image,
-      categoryId,
-      slug,
-      featured,
-      onSale,
-      rating,
-      reviewCount,
-      stock,
-    } = body;
-
-    // Check if slug already exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { slug }
-    });
-
-    if (existingProduct) {
-      return NextResponse.json(
-        { error: 'Product with this slug already exists' },
-        { status: 400 }
-      );
-    }
-
-    // Check if category exists
-    const category = await prisma.category.findUnique({
-      where: { id: categoryId }
-    });
-
-    if (!category) {
-      return NextResponse.json(
-        { error: 'Category not found' },
-        { status: 400 }
-      );
-    }
-
-    const newProduct = await prisma.product.create({
-      data: {
-        name,
-        description,
-        price,
-        originalPrice,
-        image,
-        categoryId,
-        slug,
-        featured: featured || false,
-        onSale: onSale || false,
-        rating,
-        reviewCount: reviewCount || 0,
-        stock: stock || 0,
-      },
-      include: {
-        category: true
-      }
-    });
-
-    return NextResponse.json(newProduct, { status: 201 });
-  } catch (error) {
-    console.error('Error creating product:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

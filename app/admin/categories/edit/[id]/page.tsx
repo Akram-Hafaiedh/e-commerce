@@ -13,7 +13,7 @@ export default function EditCategoryPage() {
 
     const fetchCategory = useCallback(async () => {
         try {
-            const response = await fetch(`/api/categories/${params.id}`);
+            const response = await fetch(`/api/admin/categories/${params.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setCategory(data);

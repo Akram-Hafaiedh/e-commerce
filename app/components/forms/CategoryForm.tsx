@@ -57,7 +57,7 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
         setError('');
 
         try {
-            const url = isEditing ? `/api/categories/${category?.id}` : '/api/categories';
+            const url = isEditing ? `/api/admin/categories/${category?.id}` : '/api/admin/categories';
             const method = isEditing ? 'PUT' : 'POST';
 
             const response = await fetch(url, {

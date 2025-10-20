@@ -14,7 +14,7 @@ export default function CategoriesManagement() {
 
     const fetchCategories = useCallback(async () => {
         try {
-            const response = await fetch('/api/categories');
+            const response = await fetch('/api/admin/categories');
             if (response.ok) {
                 const data = await response.json();
                 setCategories(data.categories);
@@ -43,7 +43,7 @@ export default function CategoriesManagement() {
         }
 
         try {
-            const response = await fetch(`/api/categories/${id}`, {
+            const response = await fetch(`/api/admin/categories/${id}`, {
                 method: 'DELETE',
             });
 

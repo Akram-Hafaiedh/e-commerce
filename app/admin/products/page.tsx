@@ -14,7 +14,7 @@ export default function ProductsManagement() {
 
     const fetchProducts = useCallback(async () => {
         try {
-            const response = await fetch('/api/products');
+            const response = await fetch('/api/admin/products');
             if (response.ok) {
                 const data = await response.json();
                 setProducts(data.products || data); // Handle both response formats
@@ -43,7 +43,7 @@ export default function ProductsManagement() {
         }
 
         try {
-            const response = await fetch(`/api/products/${id}`, {
+            const response = await fetch(`/api/admin/products/${id}`, {
                 method: 'DELETE',
             });
 

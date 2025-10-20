@@ -14,7 +14,7 @@ export default function EditProductPage() {
 
     const fetchProduct = useCallback(async () => {
         try {
-            const response = await fetch(`/api/products/${params.id}`);
+            const response = await fetch(`/api/admin/products/${params.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setProduct(data);

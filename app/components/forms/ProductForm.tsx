@@ -56,7 +56,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/admin/categories');
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -87,7 +87,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
     setError('');
 
     try {
-      const url = isEditing ? `/api/products/${product?.id}` : '/api/products';
+      const url = isEditing ? `/api/admin/products/${product?.id}` : '/api/admin/products';
       const method = isEditing ? 'PUT' : 'POST';
 
       const payload = {
