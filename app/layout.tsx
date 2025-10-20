@@ -1,10 +1,12 @@
+// app/layout.tsx
+
 import type { Metadata } from 'next';
 import './globals.css';
-import Navbar from './components/Navbar';
 import { CartProvider } from './context/CartContext';
 import { Analytics } from "@vercel/analytics/next"
 import { ToastProvider } from './context/ToastContext';
 import { Providers } from './providers/providers';
+import LayoutContent from './components/Navbar/LayoutContent';
 
 export const metadata: Metadata = {
   title: 'Ecommerce Store',
@@ -22,10 +24,7 @@ export default function RootLayout({
         <Providers>
           <ToastProvider>
             <CartProvider>
-              <Navbar />
-              <main>
-                {children}
-              </main>
+              <LayoutContent>{children}</LayoutContent>
               <Analytics />
             </CartProvider>
           </ToastProvider>
