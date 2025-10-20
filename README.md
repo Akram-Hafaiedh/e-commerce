@@ -1,4 +1,4 @@
-🛍️ Modern E-Commerce Platform
+# 🛍️ Modern E-Commerce Platform
 
 A full-stack e-commerce application built with Next.js 14, featuring a complete admin dashboard, user authentication, and a responsive storefront.
 ✨ Features
