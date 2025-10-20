@@ -102,27 +102,26 @@ npm run dev
     Navigate to http://localhost:3000
 
 📁 Project Structure
-text
 
-ecommerce-platform/
-├── app/                    # Next.js 14 App Router
-│   ├── admin/             # Admin dashboard routes
-│   ├── api/               # API routes
-│   │   ├── admin/         # Admin-only APIs
-│   │   ├── auth/          # Authentication
-│   │   └── public/        # Public APIs
-│   ├── auth/              # Authentication pages
-│   ├── products/          # Product pages
-│   └── categories/        # Category pages
-├── components/            # Reusable components
-│   ├── forms/             # Form components
-│   ├── layout/            # Layout components
-│   └── ui/                # UI components
-├── lib/                   # Utility libraries
-│   ├── prisma.ts          # Database client
-│   └── auth.ts            # Auth utilities
-├── types/                 # TypeScript type definitions
-└── public/               # Static assets
+    ecommerce-platform/
+    ├── app/                    # Next.js 14 App Router
+    │   ├── admin/             # Admin dashboard routes
+    │   ├── api/               # API routes
+    │   │   ├── admin/         # Admin-only APIs
+    │   │   ├── auth/          # Authentication
+    │   │   └── public/        # Public APIs
+    │   ├── auth/              # Authentication pages
+    │   ├── products/          # Product pages
+    │   └── categories/        # Category pages
+    ├── components/            # Reusable components
+    │   ├── forms/             # Form components
+    │   ├── layout/            # Layout components
+    │   └── ui/                # UI components
+    ├── lib/                   # Utility libraries
+    │   ├── prisma.ts          # Database client
+    │   └── auth.ts            # Auth utilities
+    ├── types/                 # TypeScript type definitions
+    └── public/               # Static assets
 
 🗄️ Database Schema
 
