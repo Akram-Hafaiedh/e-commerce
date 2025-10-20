@@ -48,7 +48,8 @@ A full-stack e-commerce application built with Next.js 14, featuring a complete 
 
     Middleware Protection for admin routes
 
-🚀 Quick Start
+## 🚀 Quick Start
+
 Prerequisites
 
     Node.js 18+
@@ -59,44 +60,33 @@ Prerequisites
 
 Installation
 
-    Clone the repository
+Clone the repository
 
-bash
+    git clone [Your Repository URL](your-repo-url)
+    cd ecommerce-platform
 
-git clone [Your Repository URL](your-repo-url)
-cd ecommerce-platform
+Install dependencies
 
-    Install dependencies
+    npm install
 
-bash
+Set up environment variables
 
-npm install
-
-    Set up environment variables
-
-bash
-
-cp .env.example .env
+    cp .env.example .env
 
 Edit .env with your configuration:
-env
 
-DATABASE_URL="postgresql://username:password@localhost:5432/ecommerce"
-NEXTAUTH_SECRET="your-secret-key"
-NEXTAUTH_URL="[http://localhost:3000](http://localhost:300)"
+    DATABASE_URL="postgresql://username:password@localhost:5432/ecommerce"
+    NEXTAUTH_SECRET="your-secret-key"
+    NEXTAUTH_URL="[http://localhost:3000](http://localhost:300)"
 
-    Set up the database
+Set up the database
 
-bash
+    npx prisma generate
+    npx prisma db push
 
-npx prisma generate
-npx prisma db push
+Run the development server
 
-    Run the development server
-
-bash
-
-npm run dev
+    npm run dev
 
     Open your browser
     Navigate to http://localhost:3000
@@ -205,27 +195,25 @@ User Accounts
 
 🚀 Deployment
 Vercel (Recommended)
-bash
 
-npm run build
-vercel deploy
+    npm run build
+    vercel deploy
 
 Environment Variables for Production
 env
 
-DATABASE_URL="your-production-database-url"
-NEXTAUTH_SECRET="your-production-secret"
-NEXTAUTH_URL="[https://yourdomain.com](https://yourdomain.com)"
+    DATABASE_URL="your-production-database-url"
+    NEXTAUTH_SECRET="your-production-secret"
+    NEXTAUTH_URL="[https://yourdomain.com](https://yourdomain.com)"
 
 🛠️ Development
 Available Scripts
-bash
 
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npx prisma studio    # Open database GUI
+    npm run dev          # Start development server
+    npm run build        # Build for production
+    npm run start        # Start production server
+    npm run lint         # Run ESLint
+    npx prisma studio    # Open database GUI
 
 Code Style
 
