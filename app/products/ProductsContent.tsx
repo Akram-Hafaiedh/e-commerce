@@ -1,149 +1,139 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
 import { Product } from '@/types/product';
 import { Category } from '@/types/category';
-import { products } from '@/lib/product';
-import { categories } from '@/lib/category';
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 12;
+
+interface ProductsResponse {
+    products: Product[];
+    total: number;
+    page: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+}
 
 export default function ProductsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    // State for filters, search, and pagination
+    // State
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [priceRange, setPriceRange] = useState([0, 2000]);
-    const [sortBy, setSortBy] = useState('name');
+    const [sortBy, setSortBy] = useState('newest');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showFilters, setShowFilters] = useState(false);
     const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-    // Initialize state from URL query parameters
+    // Fetch categories on mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('/api/categories');
+                if (response.ok) {
+                    const data = await response.json();
+                    setCategories(data.categories);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    // Initialize state from URL
     useEffect(() => {
         const filter = searchParams.get('filter');
         const sort = searchParams.get('sort');
         const search = searchParams.get('search');
         const category = searchParams.get('category');
+        const page = searchParams.get('page');
 
-        if (filter) {
-            setActiveFilter(filter);
-            if (filter === 'featured') {
-                setSelectedCategories([]);
-            } else if (filter === 'onSale') {
-                setSelectedCategories([]);
-            }
-        }
-
-        if (sort) {
-            setSortBy(sort);
-        }
-
-        if (search) {
-            setSearchTerm(search);
-        }
-
-        if (category) {
-            setSelectedCategories([category]);
-        }
+        if (filter) setActiveFilter(filter);
+        if (sort) setSortBy(sort);
+        if (search) setSearchTerm(search);
+        if (category) setSelectedCategories([category]);
+        if (page) setCurrentPage(parseInt(page));
     }, [searchParams]);
+
+    // Fetch products whenever filters change
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.set('page', currentPage.toString());
+                params.set('limit', ITEMS_PER_PAGE.toString());
+
+                if (activeFilter === 'featured') params.set('featured', 'true');
+                if (activeFilter === 'onSale') params.set('onSale', 'true');
+                if (searchTerm) params.set('search', searchTerm);
+                if (selectedCategories.length === 1) {
+                    params.set('category', selectedCategories[0]);
+                }
+
+                const response = await fetch(`/api/products?${params.toString()}`);
+                if (response.ok) {
+                    const data: ProductsResponse = await response.json();
+
+                    // Apply client-side sorting if needed
+                    const sortedProducts = [...data.products];
+                    switch (sortBy) {
+                        case 'price-low':
+                            sortedProducts.sort((a, b) => a.price - b.price);
+                            break;
+                        case 'price-high':
+                            sortedProducts.sort((a, b) => b.price - a.price);
+                            break;
+                        case 'name':
+                            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+                            break;
+                        case 'rating':
+                            sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                            break;
+                        // 'newest' is default from API
+                    }
+
+                    setProducts(sortedProducts);
+                    setTotalPages(data.totalPages);
+                    setTotalProducts(data.total);
+                }
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, [currentPage, activeFilter, searchTerm, selectedCategories, sortBy]);
 
     // Update URL when filters change
     useEffect(() => {
         const params = new URLSearchParams();
 
-        if (activeFilter) {
-            params.set('filter', activeFilter);
-        }
-
+        if (activeFilter) params.set('filter', activeFilter);
         if (searchTerm) params.set('search', searchTerm);
-        if (sortBy && sortBy !== 'name') params.set('sort', sortBy);
+        if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
         if (selectedCategories.length === 1) params.set('category', selectedCategories[0]);
+        if (currentPage > 1) params.set('page', currentPage.toString());
 
-        if (params.toString()) {
-            router.replace(`/products?${params.toString()}`, { scroll: false });
-        } else {
-            router.replace('/products', { scroll: false });
-        }
-    }, [searchTerm, sortBy, selectedCategories, activeFilter, router]);
-
-    // Calculate price stats for all products
-    const priceStats = useMemo(() => {
-        const prices = products.map((p: Product) => p.price);
-        return {
-            min: Math.min(...prices),
-            max: Math.max(...prices)
-        };
-    }, []);
-
-    // Filter and search logic
-    const filteredProducts = useMemo(() => {
-        let filtered = products;
-
-        const filter = searchParams.get('filter');
-        if (filter === 'featured') {
-            filtered = filtered.filter((product: Product) => product.featured);
-        } else if (filter === 'onSale') {
-            filtered = filtered.filter((product: Product) => product.onSale);
-        }
-
-        const category = searchParams.get('category');
-        if (category) {
-            filtered = filtered.filter((product: Product) => product.category === category);
-        }
-
-        if (searchTerm) {
-            filtered = filtered.filter((product: Product) =>
-                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                product.description.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        filtered = filtered.filter((product: Product) =>
-            product.price >= priceRange[0] && product.price <= priceRange[1]
-        );
-
-        if (selectedCategories.length > 0) {
-            filtered = filtered.filter((product: Product) =>
-                selectedCategories.includes(product.category)
-            );
-        }
-
-        filtered = [...filtered].sort((a, b) => {
-            switch (sortBy) {
-                case 'price-low':
-                    return a.price - b.price;
-                case 'price-high':
-                    return b.price - a.price;
-                case 'name':
-                    return a.name.localeCompare(b.name);
-                case 'rating':
-                    return (b.rating || 0) - (a.rating || 0);
-                case 'newest':
-                    return parseInt(b.id) - parseInt(a.id);
-                default:
-                    return 0;
-            }
-        });
-
-        return filtered;
-    }, [searchTerm, priceRange, sortBy, selectedCategories, searchParams]);
-
-    // Pagination logic
-    const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
-    const clampPage = (page: number) => Math.max(1, Math.min(page, totalPages));
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length);
-    const currentProducts = filteredProducts.slice(startIndex, endIndex);
+        const newUrl = params.toString() ? `/products?${params.toString()}` : '/products';
+        router.replace(newUrl, { scroll: false });
+    }, [searchTerm, sortBy, selectedCategories, activeFilter, currentPage, router]);
 
     const handlePageChange = (page: number) => {
-        const next = clampPage(page);
-        if (next === currentPage) return;
-        setCurrentPage(next);
+        if (page < 1 || page > totalPages || page === currentPage) return;
+        setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -158,8 +148,7 @@ export default function ProductsContent() {
 
     const clearFilters = () => {
         setSearchTerm('');
-        setPriceRange([0, priceStats.max]);
-        setSortBy('name');
+        setSortBy('newest');
         setSelectedCategories([]);
         setActiveFilter(null);
         setCurrentPage(1);
@@ -171,6 +160,8 @@ export default function ProductsContent() {
         : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
 
     const activeCategory = searchParams.get('category');
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, totalProducts);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -215,9 +206,7 @@ export default function ProductsContent() {
 
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
-                                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${showFilters
-                                    ? 'bg-blue-700 text-white'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${showFilters ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
                                     }`}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,17 +220,24 @@ export default function ProductsContent() {
                     {/* Results Info */}
                     <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between text-sm text-gray-600">
                         <span>
-                            Showing {startIndex + 1}-{endIndex} of {filteredProducts.length} products
-                            {filteredProducts.length !== products.length && ` (filtered from ${products.length} total)`}
-                            {(activeFilter || activeCategory) && (
-                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                    {activeFilter === 'featured' && 'Featured'}
-                                    {activeFilter === 'onSale' && 'On Sale'}
-                                    {activeCategory && `${categories.find((c: Category) => c.slug === activeCategory)?.name}`}
-                                </span>
+                            {loading ? (
+                                'Loading products...'
+                            ) : totalProducts > 0 ? (
+                                <>
+                                    Showing {startIndex}-{endIndex} of {totalProducts} products
+                                    {(activeFilter || activeCategory) && (
+                                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                            {activeFilter === 'featured' && 'Featured'}
+                                            {activeFilter === 'onSale' && 'On Sale'}
+                                            {activeCategory && `${categories.find((c: Category) => c.slug === activeCategory)?.name}`}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                'No products found'
                             )}
                         </span>
-                        {(filteredProducts.length !== products.length || activeFilter || activeCategory) && (
+                        {(searchTerm || activeFilter || activeCategory || selectedCategories.length > 0) && (
                             <button
                                 onClick={clearFilters}
                                 className="text-blue-600 hover:text-blue-700 transition-colors mt-2 sm:mt-0 font-medium"
@@ -267,28 +263,6 @@ export default function ProductsContent() {
                                     </button>
                                 </div>
 
-                                {/* Price Range */}
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Price Range</h3>
-                                    <div className="space-y-2">
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={priceStats.max}
-                                            value={priceRange[1]}
-                                            onChange={(e) => {
-                                                setPriceRange([priceRange[0], parseInt(e.target.value)]);
-                                                setCurrentPage(1);
-                                            }}
-                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                                        />
-                                        <div className="flex justify-between text-sm text-gray-600">
-                                            <span>${priceRange[0]}</span>
-                                            <span>${priceRange[1]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Sort By */}
                                 <div className="mb-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Sort By</h3>
@@ -300,11 +274,11 @@ export default function ProductsContent() {
                                         }}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                                     >
+                                        <option value="newest">Newest First</option>
                                         <option value="name">Name (A-Z)</option>
                                         <option value="price-low">Price (Low to High)</option>
                                         <option value="price-high">Price (High to Low)</option>
                                         <option value="rating">Highest Rated</option>
-                                        <option value="newest">Newest First</option>
                                     </select>
                                 </div>
 
@@ -321,9 +295,6 @@ export default function ProductsContent() {
                                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                 />
                                                 <span className="text-gray-700 flex-1">{category.name}</span>
-                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                    {products.filter((p: Product) => p.category === category.slug).length}
-                                                </span>
                                             </label>
                                         ))}
                                     </div>
@@ -341,8 +312,8 @@ export default function ProductsContent() {
                                                 setCurrentPage(1);
                                             }}
                                             className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeFilter === 'featured'
-                                                ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             ⭐ Featured Products
@@ -355,8 +326,8 @@ export default function ProductsContent() {
                                                 setCurrentPage(1);
                                             }}
                                             className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeFilter === 'onSale'
-                                                ? 'bg-red-100 text-red-800 border border-red-300'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    ? 'bg-red-100 text-red-800 border border-red-300'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             🔥 On Sale
@@ -365,7 +336,7 @@ export default function ProductsContent() {
                                 </div>
 
                                 {/* Active Filters */}
-                                {(selectedCategories.length > 0 || searchTerm || priceRange[1] < priceStats.max || activeFilter || activeCategory) && (
+                                {(selectedCategories.length > 0 || searchTerm || activeFilter) && (
                                     <div className="border-t pt-4">
                                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Active Filters</h3>
                                         <div className="flex flex-wrap gap-2">
@@ -397,25 +368,11 @@ export default function ProductsContent() {
                                                     </button>
                                                 </span>
                                             )}
-                                            {priceRange[1] < priceStats.max && (
-                                                <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                                    Price: ≤${priceRange[1]}
-                                                    <button
-                                                        onClick={() => setPriceRange([0, priceStats.max])}
-                                                        className="text-purple-600 hover:text-purple-800"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </span>
-                                            )}
                                             {activeFilter && (
                                                 <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
                                                     {activeFilter === 'featured' ? 'Featured' : 'On Sale'}
                                                     <button
-                                                        onClick={() => {
-                                                            setActiveFilter(null);
-                                                            router.replace('/products', { scroll: false });
-                                                        }}
+                                                        onClick={() => setActiveFilter(null)}
                                                         className="text-orange-600 hover:text-orange-800"
                                                     >
                                                         ×
@@ -431,10 +388,14 @@ export default function ProductsContent() {
 
                     {/* Products Grid */}
                     <div className={`${showFilters ? 'lg:w-3/4' : 'w-full'}`}>
-                        {currentProducts.length > 0 ? (
+                        {loading ? (
+                            <div className="flex justify-center items-center py-12">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            </div>
+                        ) : products.length > 0 ? (
                             <>
                                 <div className={gridClasses}>
-                                    {currentProducts.map((product: Product) => (
+                                    {products.map((product: Product) => (
                                         <ProductCard key={product.id} product={product} />
                                     ))}
                                 </div>
@@ -451,18 +412,30 @@ export default function ProductsContent() {
                                                 Previous
                                             </button>
 
-                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                                <button
-                                                    key={page}
-                                                    onClick={() => handlePageChange(page)}
-                                                    className={`px-4 py-2 border rounded-lg transition-colors ${currentPage === page
-                                                        ? 'bg-blue-600 text-white border-blue-600'
-                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                        }`}
-                                                >
-                                                    {page}
-                                                </button>
-                                            ))}
+                                            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                                let pageNum;
+                                                if (totalPages <= 5) {
+                                                    pageNum = i + 1;
+                                                } else if (currentPage <= 3) {
+                                                    pageNum = i + 1;
+                                                } else if (currentPage >= totalPages - 2) {
+                                                    pageNum = totalPages - 4 + i;
+                                                } else {
+                                                    pageNum = currentPage - 2 + i;
+                                                }
+                                                return (
+                                                    <button
+                                                        key={pageNum}
+                                                        onClick={() => handlePageChange(pageNum)}
+                                                        className={`px-4 py-2 border rounded-lg transition-colors ${currentPage === pageNum
+                                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                );
+                                            })}
 
                                             <button
                                                 onClick={() => handlePageChange(currentPage + 1)}
