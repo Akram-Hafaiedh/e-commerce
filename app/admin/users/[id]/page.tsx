@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Order } from '@/types/order';
 
@@ -10,8 +10,8 @@ interface UserDetail {
   email: string;
   name: string | null;
   role: string;
-  avatar: string | null;
   phone: string | null;
+  // avatar: string | null;
   address: string | null;
   isActive: boolean;
   lastLogin: string | null;
@@ -25,33 +25,30 @@ interface UserDetail {
 
 export default function UserDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const [user, setUser] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (params.id) {
-      fetchUser();
-    }
-  }, [params.id]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/users/${params.id}`);
       if (response.ok) {
         const data = await response.json();
         setUser(data);
       } else {
-        setError('Failed to fetch user details');
+        console.error('Failed to fetch user details');
       }
     } catch (error) {
-      setError('Error fetching user details');
-      console.error('Error:', error);
+      console.error('Error fetching user details:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchUser();
+    }
+  }, [params.id, fetchUser]);
 
   if (loading) {
     return (
@@ -109,7 +106,7 @@ export default function UserDetailPage() {
                 {user.name || 'No Name'}
               </h2>
               <p className="text-gray-600 mb-4">{user.email}</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Role</label>
@@ -128,8 +125,8 @@ export default function UserDetailPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Last Login</label>
                   <p className="text-gray-900">
-                    {user.lastLogin 
-                      ? new Date(user.lastLogin).toLocaleString() 
+                    {user.lastLogin
+                      ? new Date(user.lastLogin).toLocaleString()
                       : 'Never'
                     }
                   </p>
@@ -175,12 +172,11 @@ export default function UserDetailPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-gray-900">${order.total}</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
                       order.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-                      order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'
+                      }`}>
                       {order.status}
                     </span>
                   </div>
