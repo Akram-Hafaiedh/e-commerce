@@ -43,7 +43,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
       setFormData({
         name: product.name,
         description: product.description,
-        price: product.price.toString(),
+        price: product.price ? product.price.toString() : '',
         originalPrice: product.originalPrice?.toString() || '',
         image: product.image,
         categoryId: product.categoryId,
@@ -51,8 +51,8 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
         featured: product.featured,
         onSale: product.onSale,
         rating: product.rating?.toString() || '',
-        reviewCount: product.reviewCount.toString(),
-        stock: product.stock.toString(),
+        reviewCount: product.reviewCount ? product.reviewCount.toString() : '',
+        stock: product.stock ? product.stock.toString() : '',
       });
       setImagePreview(product.image);
     }

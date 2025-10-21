@@ -17,7 +17,7 @@ export default function EditProductPage() {
             const response = await fetch(`/api/admin/products/${params.id}`);
             if (response.ok) {
                 const data = await response.json();
-                setProduct(data);
+                setProduct(data.product);
             }
         } catch (error) {
             console.error('Error fetching product:', error);
@@ -34,11 +34,13 @@ export default function EditProductPage() {
         }
     }, [params.id, isAdmin, isLoading, fetchProduct]);
 
-
     if (isLoading || loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div>Loading...</div>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading product...</p>
+                </div>
             </div>
         );
     }

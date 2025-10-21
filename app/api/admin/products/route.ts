@@ -14,11 +14,18 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '12');
+        const search = searchParams.get('search');
         const category = searchParams.get('category');
 
         const skip = (page - 1) * limit;
 
-        const where: Prisma.ProductWhereInput = {};
+        const where: Prisma.ProductWhereInput = search ?
+            {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } }
+                ]
+            } : {};
         if (category) {
             where.categoryId = category;
         }
@@ -27,13 +34,7 @@ export async function GET(request: NextRequest) {
             prisma.product.findMany({
                 where,
                 include: {
-                    category: {
-                        select: {
-                            id: true,
-                            name: true,
-                            slug: true
-                        }
-                    }
+                    category: true
                 },
                 skip,
                 take: limit,
