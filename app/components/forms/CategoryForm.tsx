@@ -14,6 +14,8 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>('');
     const [formData, setFormData] = useState({
         name: '',
         slug: '',
@@ -31,6 +33,7 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                 image: category.image,
                 featured: category.featured || false,
             });
+            setImagePreview(category.image);
         }
     }, [category, isEditing]);
 
@@ -51,21 +54,57 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
         }
     };
 
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                setError('Please select a valid image file');
+                return;
+            }
+
+            /// Validate file size (e.g., 5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Image size should be less than 5MB');
+                return;
+            }
+
+            setImageFile(file);
+            setError('');
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('slug', formData.slug);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('featured', String(formData.featured));
+            if (imageFile) {
+                formDataToSend.append('image', imageFile);
+            } else if (formData.image) {
+                formDataToSend.append('imageUrl', formData.image);
+            }
+
+
             const url = isEditing ? `/api/admin/categories/${category?.id}` : '/api/admin/categories';
             const method = isEditing ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
+                body: formDataToSend,
             });
 
             if (response.ok) {
@@ -111,7 +150,7 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                                 required
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Enter category name"
                             />
                         </div>
@@ -127,7 +166,7 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                                 required
                                 value={formData.slug}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="category-slug"
                             />
                             <p className="mt-1 text-sm text-gray-500">
@@ -146,38 +185,87 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                                 rows={4}
                                 value={formData.description}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Enter category description"
                             />
                         </div>
 
                         <div>
                             <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-                                Image URL *
+                                Category Image *
                             </label>
-                            <input
-                                type="url"
-                                id="image"
-                                name="image"
-                                required
-                                value={formData.image}
-                                onChange={handleChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="https://example.com/image.jpg"
-                            />
-                            {formData.image && (
-                                <div className="mt-2">
-                                    <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
-                                    <Image
-                                        src={formData.image}
-                                        alt="Preview"
-                                        className="h-32 w-32 object-cover rounded-md border"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
+                            <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="imageFile" className="block text-sm text-gray-600 mb-1">
+                                        Upload Image File
+                                    </label>
+                                    <input
+                                        type="file"
+                                        id="imageFile"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                     />
                                 </div>
-                            )}
+
+                                <div className="flex items-center">
+                                    <div className="flex-grow border-t border-gray-300"></div>
+                                    <span className="px-3 text-sm text-gray-500">OR</span>
+                                    <div className="flex-grow border-t border-gray-300"></div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="image" className="block text-sm text-gray-600 mb-1">
+                                        Image URL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        id="image"
+                                        name="image"
+                                        value={formData.image}
+                                        onChange={handleChange}
+                                        disabled={!!imageFile}
+                                        className="block w-full border text-gray-900 border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    {imageFile && (
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            Remove the uploaded file to use a URL instead
+                                        </p>
+                                    )}
+                                </div>
+                                {imagePreview && (
+                                    <div className="mt-2">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-sm text-gray-500">Image Preview:</p>
+                                            {imageFile && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setImageFile(null);
+                                                        setImagePreview('');
+                                                    }}
+                                                    className="text-xs text-red-600 hover:text-red-800"
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="relative h-32 w-32">
+                                            <Image
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                width={128}
+                                                height={128}
+                                                className="h-32 w-32 object-cover rounded-md border"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex items-center">

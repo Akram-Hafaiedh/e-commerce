@@ -163,7 +163,7 @@ export default function ProductsManagement() {
                                             </div>
                                             <div className="ml-4">
                                                 <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
-                                                <p className="text-sm text-gray-500">{product.category}</p>
+                                                <p className="text-sm text-gray-500">{product.category.name}</p>
                                                 <p className="text-sm text-gray-500">${product.price}</p>
                                             </div>
                                         </div>

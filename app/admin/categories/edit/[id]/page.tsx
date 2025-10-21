@@ -16,7 +16,7 @@ export default function EditCategoryPage() {
             const response = await fetch(`/api/admin/categories/${params.id}`);
             if (response.ok) {
                 const data = await response.json();
-                setCategory(data);
+                setCategory(data.category);
             }
         } catch (error) {
             console.error('Error fetching category:', error);

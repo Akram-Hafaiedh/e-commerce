@@ -2,6 +2,7 @@
 import { requireAdmin } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 
 export async function GET() {
     try {
@@ -23,7 +24,7 @@ export async function GET() {
             }
         });
 
-        return NextResponse.json(categories);
+        return NextResponse.json({ message: 'Categories fetched successfully', categories }, { status: 200 });
     } catch (error) {
         console.error('Error fetching categories:', error);
         return NextResponse.json(
@@ -40,8 +41,18 @@ export async function POST(request: NextRequest) {
             return auth.error;
         }
 
-        const body = await request.json();
-        const { name, description, image, featured, slug } = body;
+        const formData = await request.formData();
+        const name = formData.get('name') as string;
+        const description = formData.get('description') as string;
+        const featured = formData.get('featured') === 'true';
+        const slug = formData.get('slug') as string;
+
+        if (!name || !description || !slug) {
+            return NextResponse.json(
+                { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
 
         const existingCategory = await prisma.category.findUnique({ where: { slug } });
         if (existingCategory) {
@@ -51,11 +62,48 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        let imageUrl: string;
+        const imageFile = formData.get('image') as File | null;
+        const imageUrlFromForm = formData.get('imageUrl') as string | null;
+
+        if (imageFile && !imageFile.type.startsWith('image/')) {
+            return NextResponse.json(
+                { error: 'Invalid file type. Only images are allowed.' },
+                { status: 400 }
+            );
+        }
+        if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+            return NextResponse.json(
+                { error: 'File size exceeds 5MB limit.' },
+                { status: 400 }
+            );
+        }
+
+
+        if (imageFile && imageFile.size > 0) {
+            const timestamp = Date.now();
+            const fileExtension = imageFile.name.split('.').pop();
+            const fileName = `categories/${slug}-${timestamp}.${fileExtension}`;
+            const blob = await put(fileName, imageFile, {
+                access: 'public',
+                addRandomSuffix: false,
+            });
+            imageUrl = blob.url;
+        } else if (imageUrlFromForm) {
+            imageUrl = imageUrlFromForm;
+        } else {
+            return NextResponse.json(
+                { error: 'Image is required' },
+                { status: 400 }
+            );
+        }
+
+
         const newCategory = await prisma.category.create({
             data: {
                 name,
                 description,
-                image,
+                image: imageUrl,
                 featured,
                 slug
             },

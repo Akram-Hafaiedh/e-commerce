@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/api-auth';
+import { put } from '@vercel/blob';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -46,8 +47,37 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         const { id } = await params;
-        const body = await request.json();
-        const { name, description, image, featured, slug } = body;
+
+        const formData = await request.formData();
+        const name = formData.get('name') as string;
+        const description = formData.get('description') as string;
+        const featured = formData.get('featured') === 'true';
+        const slug = formData.get('slug') as string;
+
+        if (!name || !description || !slug) {
+            return NextResponse.json(
+                { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
+
+        let imageUrl: string;
+        const imageFile = formData.get('image') as File | null;
+        const imageUrlFromForm = formData.get('imageUrl') as string | null;
+
+
+        if (imageFile && !imageFile.type.startsWith('image/')) {
+            return NextResponse.json(
+                { error: 'Invalid file type. Only images are allowed.' },
+                { status: 400 }
+            );
+        }
+        if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+            return NextResponse.json(
+                { error: 'File size exceeds 5MB limit.' },
+                { status: 400 }
+            );
+        }
 
         // Check if category exists
         const existingCategory = await prisma.category.findUnique({
@@ -55,7 +85,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         });
 
         if (!existingCategory) {
-            return NextResponse.json({ error: 'Category not found' }, { status: 404 });
+            return NextResponse.json(
+                { error: 'Category not found' },
+                { status: 404 }
+            );
         }
 
         // Check if new slug conflicts with other categories
@@ -72,12 +105,27 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             }
         }
 
+        if (imageFile && imageFile.size > 0) {
+            const timestamp = Date.now();
+            const fileExtension = imageFile.name.split('.').pop();
+            const fileName = `categories/${slug}-${timestamp}.${fileExtension}`;
+            const blob = await put(fileName, imageFile, {
+                access: 'public',
+                addRandomSuffix: false,
+            });
+            imageUrl = blob.url;
+        } else if (imageUrlFromForm) {
+            imageUrl = imageUrlFromForm;
+        } else {
+            imageUrl = existingCategory.image;
+        }
+
         const updatedCategory = await prisma.category.update({
             where: { id },
             data: {
                 name,
                 description,
-                image,
+                image: imageUrl,
                 featured,
                 slug,
             },
@@ -86,7 +134,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             }
         });
 
-        return NextResponse.json(updatedCategory);
+        return NextResponse.json(
+            { message: 'Category updated successfully', updatedCategory },
+            { status: 200 }
+        );
     } catch (error) {
         console.error('Error updating category:', error);
         return NextResponse.json(

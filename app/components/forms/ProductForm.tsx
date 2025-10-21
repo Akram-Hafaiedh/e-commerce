@@ -16,6 +16,9 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -51,14 +54,18 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
         reviewCount: product.reviewCount.toString(),
         stock: product.stock.toString(),
       });
+      setImagePreview(product.image);
     }
   }, [product, isEditing]);
 
   const fetchCategories = async () => {
     try {
       const response = await fetch('/api/admin/categories');
-      const data = await response.json();
-      setCategories(data);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(Array.isArray(data.categories));
+        setCategories(data.categories);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -81,30 +88,78 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      // Validate file size (e.g., 5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+
+      setImageFile(file);
+      setError('');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      // Validate that either image file or URL is provided
+      if (!imageFile && !formData.image && !isEditing) {
+        setError('Please provide either an image file or image URL');
+        setLoading(false);
+        return;
+      }
+
+      const formDataToSend = new FormData();
+
+      // Append all form fields
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('categoryId', formData.categoryId);
+      formDataToSend.append('slug', formData.slug);
+      formDataToSend.append('featured', String(formData.featured));
+      formDataToSend.append('onSale', String(formData.onSale));
+      formDataToSend.append('stock', formData.stock);
+      formDataToSend.append('reviewCount', formData.reviewCount);
+
+      if (formData.originalPrice) {
+        formDataToSend.append('originalPrice', formData.originalPrice);
+      }
+
+      if (formData.rating) {
+        formDataToSend.append('rating', formData.rating);
+      }
+
+      // Append image file if available, otherwise use URL
+      if (imageFile) {
+        formDataToSend.append('image', imageFile);
+      } else if (formData.image) {
+        formDataToSend.append('imageUrl', formData.image);
+      }
+
       const url = isEditing ? `/api/admin/products/${product?.id}` : '/api/admin/products';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const payload = {
-        ...formData,
-        price: parseFloat(formData.price),
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-        rating: formData.rating ? parseFloat(formData.rating) : undefined,
-        reviewCount: parseInt(formData.reviewCount) || 0,
-        stock: parseInt(formData.stock) || 0,
-      };
-
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: formDataToSend,
       });
 
       if (response.ok) {
@@ -151,7 +206,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter product name"
                 />
               </div>
@@ -167,7 +222,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   required
                   value={formData.slug}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="product-slug"
                 />
               </div>
@@ -182,7 +237,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   required
                   value={formData.categoryId}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select a category</option>
                   {categories.map((category) => (
@@ -206,7 +261,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   step="0.01"
                   value={formData.price}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"
                 />
               </div>
@@ -223,7 +278,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   step="0.01"
                   value={formData.originalPrice}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"
                 />
               </div>
@@ -240,7 +295,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   min="0"
                   value={formData.stock}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0"
                 />
               </div>
@@ -258,7 +313,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   step="0.1"
                   value={formData.rating}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.0"
                 />
               </div>
@@ -274,7 +329,7 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   min="0"
                   value={formData.reviewCount}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0"
                 />
               </div>
@@ -291,38 +346,89 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                 rows={4}
                 value={formData.description}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter product description"
               />
             </div>
 
             <div>
-              <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-                Image URL *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Image *
               </label>
-              <input
-                type="url"
-                id="image"
-                name="image"
-                required
-                value={formData.image}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://example.com/image.jpg"
-              />
-              {formData.image && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
-                  <Image
-                    src={formData.image}
-                    alt="Preview"
-                    className="h-32 w-32 object-cover rounded-md border"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="imageFile" className="block text-sm text-gray-600 mb-1">
+                    Upload Image File
+                  </label>
+                  <input
+                    type="file"
+                    id="imageFile"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
                 </div>
-              )}
+
+                <div className="flex items-center">
+                  <div className="flex-grow border-t border-gray-300"></div>
+                  <span className="px-3 text-sm text-gray-500">OR</span>
+                  <div className="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <div>
+                  <label htmlFor="image" className="block text-sm text-gray-600 mb-1">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    id="image"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleChange}
+                    disabled={!!imageFile}
+                    className="block w-full border text-gray-900 border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  {imageFile && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Remove the uploaded file to use a URL instead
+                    </p>
+                  )}
+                </div>
+
+                {imagePreview && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-500">Image Preview:</p>
+                      {imageFile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview('');
+                          }}
+                          className="text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative h-32 w-32">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        width={128}
+                        height={128}
+                        className="h-32 w-32 object-cover rounded-md border"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
