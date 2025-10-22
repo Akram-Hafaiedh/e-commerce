@@ -247,7 +247,7 @@ export default function ProductContent({ product, category }: ProductContentProp
                     <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Products</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {products
-                            .filter(p => p.category === product.category && p.id !== product.id)
+                            .filter(p => p.category.slug === product.category.slug && p.id !== product.id)
                             .slice(0, 4)
                             .map((relatedProduct) => (
                                 <Link

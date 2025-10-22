@@ -23,7 +23,7 @@ export default function CategoryPage() {
     const [sortBy, setSortBy] = useState('name');
 
     // Get products for this category
-    const categoryProducts = products.filter((p) => p.category === slug);
+    const categoryProducts = products.filter((p) => p.category.slug === slug);
 
     // Filter and search logic
     const filteredProducts = useMemo(() => {
