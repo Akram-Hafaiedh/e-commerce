@@ -45,20 +45,20 @@ export default function CartPage() {
                             <h2 className="text-2xl font-bold text-center mb-8">
                                 Why Shop With Us?
                             </h2>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/15 transition-all duration-300">
                                     <div className="text-3xl mb-3 transform hover:scale-105 transition-transform">🚚</div>
                                     <h3 className="font-bold mb-2">Free Shipping</h3>
                                     <p className="text-blue-100 text-sm">On orders over $50</p>
                                 </div>
-                                
+
                                 <div className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/15 transition-all duration-300">
                                     <div className="text-3xl mb-3 transform hover:scale-105 transition-transform">💳</div>
                                     <h3 className="font-bold mb-2">Secure Payment</h3>
                                     <p className="text-blue-100 text-sm">100% secure checkout</p>
                                 </div>
-                                
+
                                 <div className="text-center p-4 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/15 transition-all duration-300">
                                     <div className="text-3xl mb-3 transform hover:scale-105 transition-transform">↩️</div>
                                     <h3 className="font-bold mb-2">Easy Returns</h3>
@@ -118,7 +118,7 @@ export default function CartPage() {
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base">{item.product.name}</h3>
                                                 <p className="text-gray-600 text-sm">${item.product.price}</p>
-                                                <p className="text-gray-500 text-xs sm:text-sm">{item.product.category}</p>
+                                                <p className="text-gray-500 text-xs sm:text-sm">{item.product.category.name}</p>
                                             </div>
                                         </div>
 
