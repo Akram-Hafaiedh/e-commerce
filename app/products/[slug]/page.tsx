@@ -16,7 +16,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         notFound();
     }
 
-    const category = categories.find((c) => c.slug === product.category);
+    const category = categories.find((c) => c.slug === product.category.slug);
 
     return <ProductContent product={product} category={category} />;
 
