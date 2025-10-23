@@ -5,7 +5,6 @@ const prisma = new PrismaClient()
 
 async function seedAdmin() {
     try {
-
         const adminUser = await prisma.user.upsert({
             where: { email: 'admin@example.com' },
             update: {},
@@ -17,7 +16,7 @@ async function seedAdmin() {
             },
         })
 
-        console.log('Admin user created:', adminUser)
+        console.log('Admin user created:', adminUser.email)
 
         const regularUser = await prisma.user.upsert({
             where: { email: 'user@example.com' },
@@ -29,14 +28,13 @@ async function seedAdmin() {
                 role: 'USER',
             },
         })
+
         console.log('Regular user created:', regularUser.email)
     } catch (error) {
         console.error('Error seeding admin:', error)
-    } finally {
-        await prisma.$disconnect()
+        throw error
     }
 }
-
 
 async function seedCategories() {
     try {
@@ -62,32 +60,32 @@ async function seedCategories() {
                 image: '/images/home-garden.jpg',
                 featured: true,
             },
-        ];
+        ]
 
-        const categoriesPromises = categoriesData.map(categoryData => prisma.category.upsert({
-            where: { slug: categoryData.slug },
-            update: {},
-            create: categoryData,
-        }));
+        const categoriesPromises = categoriesData.map(categoryData =>
+            prisma.category.upsert({
+                where: { slug: categoryData.slug },
+                update: {},
+                create: categoryData,
+            })
+        )
 
-        const categories = await Promise.all(categoriesPromises);
+        const categories = await Promise.all(categoriesPromises)
 
-        console.log('Categories created:', categories.map(category => category.slug).join(', '));
-
+        console.log('Categories created:', categories.map(category => category.slug).join(', '))
     } catch (error) {
-        console.error('Error seeding categories:', error);
-    } finally {
-        await prisma.$disconnect();
+        console.error('Error seeding categories:', error)
+        throw error
     }
 }
 
 async function seedProducts() {
     try {
         // First, get the categories to map slugs to IDs
-        const categories = await prisma.category.findMany();
+        const categories = await prisma.category.findMany()
         const categoryMap = new Map(
             categories.map(cat => [cat.slug, cat.id])
-        );
+        )
 
         const productsData = [
             {
@@ -447,32 +445,55 @@ async function seedProducts() {
                 reviewCount: 13,
                 stock: 10,
             },
-        ];
+        ]
 
         const productsPromises = productsData.map(product => {
-            const categoryId = categoryMap.get(product.categorySlug);
+            const categoryId = categoryMap.get(product.categorySlug)
             if (!categoryId) {
-                throw new Error(`Category not found for slug: ${product.categorySlug}`);
+                throw new Error(`Category not found for slug: ${product.categorySlug}`)
             }
+
+            // Remove categorySlug before passing to Prisma
+            const { categorySlug, ...productData } = product
 
             return prisma.product.upsert({
                 where: { slug: product.slug },
                 update: {},
                 create: {
-                    ...product,
+                    ...productData,
                     categoryId,
                 },
-            });
-        });
+            })
+        })
 
-        const createdProducts = await Promise.all(productsPromises);
-        console.log(`Created ${createdProducts.length} products`);
-
+        const createdProducts = await Promise.all(productsPromises)
+        console.log(`Created ${createdProducts.length} products`)
     } catch (error) {
-        console.error('Error seeding products:', error);
+        console.error('Error seeding products:', error)
+        throw error
     }
 }
 
-seedProducts()
-seedCategories()
-seedAdmin()
+async function main() {
+    console.log('Starting database seeding...')
+
+    await seedAdmin()
+    console.log('✓ Users seeded')
+
+    await seedCategories()
+    console.log('✓ Categories seeded')
+
+    await seedProducts()
+    console.log('✓ Products seeded')
+
+    console.log('Database seeding completed successfully!')
+}
+
+main()
+    .catch((e) => {
+        console.error('Seeding failed:', e)
+        process.exit(1)
+    })
+    .finally(async () => {
+        await prisma.$disconnect()
+    })
