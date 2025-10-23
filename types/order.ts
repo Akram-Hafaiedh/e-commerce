@@ -1,3 +1,4 @@
+import { User } from "./auth";
 import { Product } from "./product";
 
 export interface OrderItem {
@@ -25,7 +26,10 @@ export interface Order {
         cardEnding: string;
         expiryDate: string;
     };
-    userId: string;
+    userId?: string | null;
+    guestEmail?: string | null;
+    User?: User | null;
+    orderNumber: string;
     createdAt: string;
     updatedAt: string;
 }
