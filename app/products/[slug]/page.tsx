@@ -1,8 +1,6 @@
-import { categories } from '@/lib/category';
-import { products } from '@/lib/product';
-
 import { notFound } from 'next/navigation';
 import ProductContent from './ProductContent';
+import { Product } from '@/types/product';
 
 interface ProductPageProps {
     params: {
@@ -10,28 +8,56 @@ interface ProductPageProps {
     };
 }
 
-export default function ProductPage({ params }: ProductPageProps) {
-    const product = products.find((p) => p.slug === params.slug);
+
+async function getProduct(slug: string) {
+    try {
+        const response = await fetch(`/api/products/slug/${slug}`, {
+            next: { revalidate: 60 } // Cache for 60 seconds
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+        const reponse = await response.json();
+        return reponse.product;
+    } catch (error) {
+        console.error('Error fetching product:', error);
+        return null;
+    }
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+
+    const product = await getProduct(params.slug);
     if (!product) {
         notFound();
     }
 
-    const category = categories.find((c) => c.slug === product.category.slug);
-
-    return <ProductContent product={product} category={category} />;
+    return <ProductContent product={product} category={product.category} />;
 
 }
 
 // Generate static params for product pages
 export async function generateStaticParams() {
-    return products.map((product) => ({
-        slug: product.slug,
-    }));
+    try {
+        const res = await fetch('/api/products?all=true', { cache: 'no-store' });
+        if (!res.ok) {
+            return [];
+        }
+        const products = await res.json();
+
+        return products.map((product: Product) => ({
+            slug: product.slug,
+        }));
+    } catch (error) {
+        console.error('Error generating static params:', error);
+        return [];
+    }
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: ProductPageProps) {
-    const product = products.find((p) => p.slug === params.slug);
+    const product = await getProduct(params.slug);
 
     if (!product) {
         return {
