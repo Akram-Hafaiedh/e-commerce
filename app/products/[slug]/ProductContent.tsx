@@ -1,30 +1,54 @@
 'use client';
 
 import { useCart } from "@/app/context/CartContext";
-
-import { products } from "@/lib/product";
 import { Category } from "@/types/category";
 import { Product } from "@/types/product";
-
 import Link from "next/link";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 
 interface ProductContentProps {
     product: Product;
     category?: Category;
 }
-export default function ProductContent({ product, category }: ProductContentProps) {
 
+export default function ProductContent({ product, category }: ProductContentProps) {
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+    const [loadingRelated, setLoadingRelated] = useState(true);
+
+    // Fetch related products
+    useEffect(() => {
+        async function fetchRelatedProducts() {
+            try {
+                setLoadingRelated(true);
+                const res = await fetch(`/api/products?category=${product.category.id}&all=true`);
+                if (res.ok) {
+                    const data = await res.json();
+                    // Filter out current product and limit to 4
+                    const filtered = data
+                        .filter((p: Product) => p.id !== product.id)
+                        .slice(0, 4);
+                    setRelatedProducts(filtered);
+                }
+            } catch (error) {
+                console.error('Error fetching related products:', error);
+            } finally {
+                setLoadingRelated(false);
+            }
+        }
+
+        if (product.category?.id) {
+            fetchRelatedProducts();
+        }
+    }, [product.id, product.category.id]);
 
     const handleAddToCart = () => {
         for (let i = 0; i < quantity; i++) {
             addToCart(product);
         }
         setQuantity(1);
-    }
+    };
 
     const handleQuantityChange = (newQuantity: number) => {
         if (newQuantity >= 1 && newQuantity <= 10) {
@@ -66,11 +90,20 @@ export default function ProductContent({ product, category }: ProductContentProp
                                 <span className="text-4xl">📦</span>
                             </div>
                             {/* Badge */}
-                            <div className="absolute top-4 left-4">
-                                <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
-                                    In Stock
-                                </span>
-                            </div>
+                            {product.stock > 0 && (
+                                <div className="absolute top-4 left-4">
+                                    <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
+                                        In Stock ({product.stock} available)
+                                    </span>
+                                </div>
+                            )}
+                            {product.onSale && (
+                                <div className="absolute top-4 right-4">
+                                    <span className="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
+                                        On Sale
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Thumbnail Images */}
@@ -91,18 +124,18 @@ export default function ProductContent({ product, category }: ProductContentProp
                         {/* Category & Rating */}
                         <div className="flex items-center justify-between">
                             <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                                {category?.name || 'Uncategorized'}
+                                {category?.name || product.category?.name || 'Uncategorized'}
                             </span>
                             <div className="flex items-center space-x-2">
                                 <div className="flex items-center space-x-1">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <span key={star} className={`text-${star <= Math.floor(product.rating || 5) ? 'yellow-400' : 'gray-300'}`}>
+                                        <span key={star} className={`${star <= Math.floor(product.rating || 5) ? 'text-yellow-400' : 'text-gray-300'}`}>
                                             ⭐
                                         </span>
                                     ))}
                                 </div>
-                                <span className="text-gray-600">
-                                    {product.rating}/5 ({product.reviewCount} reviews)
+                                <span className="text-gray-600 text-sm">
+                                    {product.rating || 5}/5 ({product.reviewCount || 0} reviews)
                                 </span>
                             </div>
                         </div>
@@ -112,11 +145,15 @@ export default function ProductContent({ product, category }: ProductContentProp
 
                         {/* Price */}
                         <div className="flex items-center space-x-4">
-                            <span className="text-4xl font-bold text-gray-900">${product.price}</span>
-                            <span className="text-lg text-gray-500 line-through">${(product.price * 1.2).toFixed(2)}</span>
-                            <span className="bg-red-100 text-red-800 text-sm font-medium px-2 py-1 rounded">
-                                Save 20%
-                            </span>
+                            <span className="text-4xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
+                            {product.onSale && (
+                                <>
+                                    <span className="text-lg text-gray-500 line-through">${(product.price * 1.2).toFixed(2)}</span>
+                                    <span className="bg-red-100 text-red-800 text-sm font-medium px-2 py-1 rounded">
+                                        Save 20%
+                                    </span>
+                                </>
+                            )}
                         </div>
 
                         {/* Description */}
@@ -154,25 +191,35 @@ export default function ProductContent({ product, category }: ProductContentProp
                             <div className="flex items-center space-x-4">
                                 <span className="text-gray-700 font-medium">Quantity:</span>
                                 <div className="flex items-center border border-gray-300 rounded-lg">
-                                    <button className="px-4 py-2 text-gray-600 hover:bg-gray-100"
+                                    <button 
+                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={() => handleQuantityChange(quantity - 1)}
+                                        disabled={quantity <= 1}
                                     >
                                         -
                                     </button>
                                     <span className="px-4 py-2 border-l border-r border-gray-300">{quantity}</span>
-                                    <button className="px-4 py-2 text-gray-600 hover:bg-gray-100"
+                                    <button 
+                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={() => handleQuantityChange(quantity + 1)}
+                                        disabled={quantity >= Math.min(10, product.stock)}
                                     >
                                         +
                                     </button>
                                 </div>
+                                <span className="text-sm text-gray-500">
+                                    {product.stock} available
+                                </span>
                             </div>
 
                             {/* Action Buttons */}
                             <div className="flex space-x-4">
-                                <button className="flex-1 bg-blue-600 text-white py-4 px-6 rounded-xl hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl"
-                                    onClick={handleAddToCart}>
-                                    Add to Cart
+                                <button 
+                                    className="flex-1 bg-blue-600 text-white py-4 px-6 rounded-xl hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={handleAddToCart}
+                                    disabled={product.stock === 0}
+                                >
+                                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                                 </button>
                                 <button className="flex-1 border-2 border-gray-300 text-gray-700 py-4 px-6 rounded-xl hover:border-gray-400 transition-colors font-semibold text-lg">
                                     Add to Wishlist
@@ -203,7 +250,7 @@ export default function ProductContent({ product, category }: ProductContentProp
                     {/* Tabs */}
                     <div className="border-b border-gray-200">
                         <nav className="flex space-x-8">
-                            {['Description', 'Specifications', 'Reviews (24)', 'Shipping'].map((tab) => (
+                            {['Description', 'Specifications', `Reviews (${product.reviewCount || 0})`, 'Shipping'].map((tab) => (
                                 <button
                                     key={tab}
                                     className="py-4 px-1 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-600 text-gray-900 font-medium"
@@ -245,11 +292,14 @@ export default function ProductContent({ product, category }: ProductContentProp
                 {/* Related Products */}
                 <div className="mt-16">
                     <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Products</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {products
-                            .filter(p => p.category.slug === product.category.slug && p.id !== product.id)
-                            .slice(0, 4)
-                            .map((relatedProduct) => (
+                    
+                    {loadingRelated ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        </div>
+                    ) : relatedProducts.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {relatedProducts.map((relatedProduct) => (
                                 <Link
                                     key={relatedProduct.id}
                                     href={`/products/${relatedProduct.slug}`}
@@ -258,13 +308,21 @@ export default function ProductContent({ product, category }: ProductContentProp
                                     <div className="h-32 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg flex items-center justify-center mb-3">
                                         <span className="text-2xl">📦</span>
                                     </div>
-                                    <h3 className="font-semibold text-gray-900 mb-1">{relatedProduct.name}</h3>
-                                    <p className="text-lg font-bold text-gray-900">${relatedProduct.price}</p>
+                                    <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{relatedProduct.name}</h3>
+                                    <p className="text-lg font-bold text-gray-900">${relatedProduct.price.toFixed(2)}</p>
+                                    {relatedProduct.onSale && (
+                                        <span className="inline-block mt-2 bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">
+                                            On Sale
+                                        </span>
+                                    )}
                                 </Link>
-                            )) || null}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-gray-500 py-8">No related products found</p>
+                    )}
                 </div>
             </div>
         </div>
     );
-} 
+}

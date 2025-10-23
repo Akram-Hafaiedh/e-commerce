@@ -1,29 +1,71 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { categories } from '@/lib/category';
-import { products } from '@/lib/product';
+import { useState, useMemo, useEffect } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import ProductCard from '../../components/ProductCard';
 import Link from 'next/link';
+import { Category } from '@/types/category';
+import { Product } from '@/types/product';
 
 export default function CategoryPage() {
     const params = useParams<{ slug: string }>();
     const slug = params.slug as string;
 
-    const category = categories.find((c) => c.slug === slug);
-
-    if (!category) {
-        notFound();
-    }
+    // State for data
+    const [category, setCategory] = useState<Category | null>(null);
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
+    const [categoryProducts, setCategoryProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
     // State for filters and search
     const [searchTerm, setSearchTerm] = useState('');
     const [priceRange, setPriceRange] = useState([0, 2000]);
     const [sortBy, setSortBy] = useState('name');
 
-    // Get products for this category
-    const categoryProducts = products.filter((p) => p.category.slug === slug);
+    // Fetch data on mount
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                setLoading(true);
+                setError(false);
+                
+                // Fetch category by slug
+                const categoryRes = await fetch(`/api/categories/${slug}`);
+                if (!categoryRes.ok) {
+                    setError(true);
+                    setLoading(false);
+                    return;
+                }
+                const categoryData = await categoryRes.json();
+                setCategory(categoryData);
+
+                // Fetch all categories for sidebar
+                const categoriesRes = await fetch('/api/categories?all=true');
+                if (categoriesRes.ok) {
+                    const categoriesData = await categoriesRes.json();
+                    setAllCategories(categoriesData);
+                }
+
+                // Fetch products for this category
+                const productsRes = await fetch(`/api/products?category=${categoryData.id}&all=true`);
+                if (productsRes.ok) {
+                    const productsData = await productsRes.json();
+                    setCategoryProducts(productsData);
+                }
+
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError(true);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        if (slug) {
+            fetchData();
+        }
+    }, [slug]);
 
     // Filter and search logic
     const filteredProducts = useMemo(() => {
@@ -59,11 +101,16 @@ export default function CategoryPage() {
         return filtered;
     }, [categoryProducts, searchTerm, priceRange, sortBy]);
 
-    // Get unique categories for filter (excluding current category)
-    const otherCategories = categories.filter(c => c.slug !== slug);
+    // Get other categories for filter (excluding current category)
+    const otherCategories = useMemo(() => {
+        return allCategories.filter(c => c.slug !== slug);
+    }, [allCategories, slug]);
 
     // Calculate price stats for the category
     const priceStats = useMemo(() => {
+        if (categoryProducts.length === 0) {
+            return { min: 0, max: 2000 };
+        }
         const prices = categoryProducts.map(p => p.price);
         return {
             min: Math.min(...prices),
@@ -71,15 +118,47 @@ export default function CategoryPage() {
         };
     }, [categoryProducts]);
 
+    // Update price range when price stats change
+    useEffect(() => {
+        setPriceRange([priceStats.min, priceStats.max]);
+    }, [priceStats]);
+
+    // Reset filters when category changes
+    useEffect(() => {
+        setSearchTerm('');
+        setSortBy('name');
+    }, [slug]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading category...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error or not found
+    if (error || !category) {
+        notFound();
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Breadcrumb */}
             <div className="bg-white border-b border-gray-200">
                 <div className="container mx-auto px-4 py-4">
                     <nav className="flex text-sm text-gray-600">
-                        <Link href="/" className="hover:text-blue-600">Home</Link>
+                        <Link href="/" className="hover:text-blue-600 transition-colors">
+                            Home
+                        </Link>
                         <span className="mx-2">/</span>
-                        <Link href="/categories" className="hover:text-blue-600">Categories</Link>
+                        <Link href="/categories" className="hover:text-blue-600 transition-colors">
+                            Categories
+                        </Link>
                         <span className="mx-2">/</span>
                         <span className="text-gray-900 font-medium">{category.name}</span>
                     </nav>
@@ -99,7 +178,7 @@ export default function CategoryPage() {
                                     placeholder="Search products..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                 />
                             </div>
 
@@ -109,15 +188,15 @@ export default function CategoryPage() {
                                 <div className="space-y-2">
                                     <input
                                         type="range"
-                                        min={0}
+                                        min={priceStats.min}
                                         max={priceStats.max}
                                         value={priceRange[1]}
                                         onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                     />
                                     <div className="flex justify-between text-sm text-gray-600">
-                                        <span>${priceRange[0]}</span>
-                                        <span>${priceRange[1]}</span>
+                                        <span>${priceRange[0].toFixed(2)}</span>
+                                        <span>${priceRange[1].toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -128,7 +207,7 @@ export default function CategoryPage() {
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all cursor-pointer"
                                 >
                                     <option value="name">Name (A-Z)</option>
                                     <option value="price-low">Price (Low to High)</option>
@@ -137,27 +216,29 @@ export default function CategoryPage() {
                             </div>
 
                             {/* Other Categories */}
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Browse Categories</h3>
-                                <div className="space-y-2">
-                                    {otherCategories.map((cat) => (
-                                        <Link
-                                            key={cat.id}
-                                            href={`/categories/${cat.slug}`}
-                                            className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                                        >
-                                            <span className="text-gray-700">{cat.name}</span>
-                                            <span className="text-gray-400">→</span>
-                                        </Link>
-                                    ))}
+                            {otherCategories.length > 0 && (
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Browse Categories</h3>
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                        {otherCategories.map((cat) => (
+                                            <Link
+                                                key={cat.id}
+                                                href={`/categories/${cat.slug}`}
+                                                className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                            >
+                                                <span className="text-gray-700">{cat.name}</span>
+                                                <span className="text-gray-400">→</span>
+                                            </Link>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Clear Filters */}
                             <button
                                 onClick={() => {
                                     setSearchTerm('');
-                                    setPriceRange([0, priceStats.max]);
+                                    setPriceRange([priceStats.min, priceStats.max]);
                                     setSortBy('name');
                                 }}
                                 className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
@@ -197,15 +278,18 @@ export default function CategoryPage() {
                                     No products found
                                 </h3>
                                 <p className="text-gray-600 mb-6">
-                                    Try adjusting your search or filters to find what you&apos;re looking for.
+                                    {searchTerm 
+                                        ? `No products match "${searchTerm}" in this price range.`
+                                        : "Try adjusting your filters to find what you're looking for."
+                                    }
                                 </p>
                                 <button
                                     onClick={() => {
                                         setSearchTerm('');
-                                        setPriceRange([0, priceStats.max]);
+                                        setPriceRange([priceStats.min, priceStats.max]);
                                         setSortBy('name');
                                     }}
-                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                                 >
                                     Clear All Filters
                                 </button>
