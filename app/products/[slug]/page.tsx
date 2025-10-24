@@ -8,9 +8,23 @@ interface ProductPageProps {
     };
 }
 
+// Helper function to get the base URL
+function getBaseUrl() {
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+        return process.env.NEXT_PUBLIC_APP_URL;
+    }
+    
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`;
+    }
+    
+    return 'http://localhost:3000';
+}
+
 async function getProduct(slug: string) {
     try {
-        const response = await fetch(`/api/products/slug/${slug}`, {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/products/slug/${slug}`, {
             next: { revalidate: 3600 } // Cache for 1 hour
         });
 
@@ -39,9 +53,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 // Generate static params for product pages
 export async function generateStaticParams() {
     try {
-        const res = await fetch('/api/products?all=true', {
-            cache: 'no-store'
-        });
+        const baseUrl = getBaseUrl();
+        const res = await fetch(`${baseUrl}/api/products?all=true`);
 
         if (!res.ok) {
             return [];
