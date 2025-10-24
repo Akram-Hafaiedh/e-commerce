@@ -5,16 +5,16 @@ export interface Product {
     name: string;
     description: string;
     price: number;
-    originalPrice?: number;
+    originalPrice: number | null;
     image: string;
     category: Category;
     categoryId: string;
     slug: string;
     featured: boolean;
     onSale: boolean;
-    rating?: number;
+    rating: number | null;
     reviewCount: number;
     stock: number;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }

@@ -3,27 +3,28 @@ export const revalidate = 3600; // 1 hour
 
 import { notFound } from 'next/navigation';
 import ProductContent from './ProductContent';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 interface ProductPageProps {
     params: { slug: string };
 }
 
-function getBaseUrl() {
-    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-    return 'http://localhost:3000';
-}
+// Define the return type for getProduct
+type ProductWithCategory = Prisma.ProductGetPayload<{
+    include: { category: true }
+}>;
 
-async function getProduct(slug: string) {
+async function getProduct(slug: string): Promise<ProductWithCategory | null> {
     try {
-        const baseUrl = getBaseUrl();
-        const response = await fetch(`${baseUrl}/api/products/slug/${slug}`, {
-            next: { revalidate: 3600 },
+        const product = await prisma.product.findUnique({
+            where: { slug },
+            include: {
+                category: true
+            }
         });
 
-        if (!response.ok) return null;
-        const data = await response.json();
-        return data.product;
+        return product;
     } catch (error) {
         console.error('Error fetching product:', error);
         return null;
