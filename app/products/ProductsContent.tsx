@@ -36,67 +36,36 @@ export default function ProductsContent() {
 
     // Fetch categories on mount
     useEffect(() => {
-        const fetchProducts = async () => {
-            setLoading(true);
+        const fetchCategories = async () => {
             try {
-                const params = new URLSearchParams();
-                params.set('page', currentPage.toString());
-                params.set('limit', ITEMS_PER_PAGE.toString());
-
-                if (activeFilter === 'featured') params.set('featured', 'true');
-                if (activeFilter === 'onSale') params.set('onSale', 'true');
-                if (searchTerm) params.set('search', searchTerm);
-                if (selectedCategories.length === 1) {
-                    params.set('category', selectedCategories[0]);
-                }
-
-                const response = await fetch(`/api/products?${params.toString()}`);
+                const response = await fetch('/api/categories');
                 if (response.ok) {
-                    const data: ProductsResponse = await response.json();
-
-                    // Apply client-side sorting if needed
-                    const sortedProducts = [...data.products];
-                    switch (sortBy) {
-                        case 'price-low':
-                            sortedProducts.sort((a, b) => a.price - b.price);
-                            break;
-                        case 'price-high':
-                            sortedProducts.sort((a, b) => b.price - a.price);
-                            break;
-                        case 'name':
-                            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
-                            break;
-                        case 'rating':
-                            sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-                            break;
-                    }
-
-                    setProducts(sortedProducts);
-                    setTotalPages(data.totalPages);
-                    setTotalProducts(data.total);
-
-                    // UPDATE URL HERE (after fetch completes)
-                    const urlParams = new URLSearchParams();
-                    if (activeFilter) urlParams.set('filter', activeFilter);
-                    if (searchTerm) urlParams.set('search', searchTerm);
-                    if (sortBy && sortBy !== 'newest') urlParams.set('sort', sortBy);
-                    if (selectedCategories.length === 1) urlParams.set('category', selectedCategories[0]);
-                    if (currentPage > 1) urlParams.set('page', currentPage.toString());
-
-                    const newUrl = urlParams.toString() ? `/products?${urlParams.toString()}` : '/products';
-                    router.replace(newUrl, { scroll: false });
+                    const data = await response.json();
+                    setCategories(data.categories || []);
                 }
             } catch (error) {
-                console.error('Error fetching products:', error);
-            } finally {
-                setLoading(false);
+                console.error('Error fetching categories:', error);
             }
         };
 
-        fetchProducts();
-    }, [currentPage, activeFilter, searchTerm, selectedCategories, sortBy, router]);
+        fetchCategories();
+    }, []);
 
-    // Fetch products whenever filters change
+    // Update URL when filters change (without triggering fetch)
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        if (activeFilter) params.set('filter', activeFilter);
+        if (searchTerm) params.set('search', searchTerm);
+        if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
+        if (selectedCategories.length === 1) params.set('category', selectedCategories[0]);
+        if (currentPage > 1) params.set('page', currentPage.toString());
+
+        const newUrl = params.toString() ? `/products?${params.toString()}` : '/products';
+        router.replace(newUrl, { scroll: false });
+    }, [searchTerm, sortBy, selectedCategories, activeFilter, currentPage, router]);
+
+    // Fetch products when filters change
     useEffect(() => {
         const fetchProducts = async () => {
             setLoading(true);
@@ -131,7 +100,7 @@ export default function ProductsContent() {
                         case 'rating':
                             sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
                             break;
-                        // 'newest' is default from API
+                        // 'newest' is default from API - no sorting needed
                     }
 
                     setProducts(sortedProducts);
@@ -148,19 +117,20 @@ export default function ProductsContent() {
         fetchProducts();
     }, [currentPage, activeFilter, searchTerm, selectedCategories, sortBy]);
 
-    // Update URL when filters change
+    // Initialize state from URL parameters on mount
     useEffect(() => {
-        const params = new URLSearchParams();
+        const initialSearch = searchParams.get('search');
+        const initialSort = searchParams.get('sort');
+        const initialCategory = searchParams.get('category');
+        const initialFilter = searchParams.get('filter');
+        const initialPage = searchParams.get('page');
 
-        if (activeFilter) params.set('filter', activeFilter);
-        if (searchTerm) params.set('search', searchTerm);
-        if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
-        if (selectedCategories.length === 1) params.set('category', selectedCategories[0]);
-        if (currentPage > 1) params.set('page', currentPage.toString());
-
-        const newUrl = params.toString() ? `/products?${params.toString()}` : '/products';
-        router.replace(newUrl, { scroll: false });
-    }, [searchTerm, sortBy, selectedCategories, activeFilter, currentPage, router]);
+        if (initialSearch) setSearchTerm(initialSearch);
+        if (initialSort) setSortBy(initialSort);
+        if (initialCategory) setSelectedCategories([initialCategory]);
+        if (initialFilter) setActiveFilter(initialFilter);
+        if (initialPage) setCurrentPage(Number(initialPage));
+    }, [searchParams]);
 
     const handlePageChange = (page: number) => {
         if (page < 1 || page > totalPages || page === currentPage) return;
@@ -183,7 +153,6 @@ export default function ProductsContent() {
         setSelectedCategories([]);
         setActiveFilter(null);
         setCurrentPage(1);
-        router.replace('/products', { scroll: false });
     };
 
     const gridClasses = showFilters
@@ -337,7 +306,7 @@ export default function ProductsContent() {
                                     <div className="space-y-2">
                                         <button
                                             onClick={() => {
-                                                setActiveFilter('featured');
+                                                setActiveFilter(activeFilter === 'featured' ? null : 'featured');
                                                 setSelectedCategories([]);
                                                 setSearchTerm('');
                                                 setCurrentPage(1);
@@ -351,7 +320,7 @@ export default function ProductsContent() {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setActiveFilter('onSale');
+                                                setActiveFilter(activeFilter === 'onSale' ? null : 'onSale');
                                                 setSelectedCategories([]);
                                                 setSearchTerm('');
                                                 setCurrentPage(1);
