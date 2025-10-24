@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Category } from '@/types/category';
 import Image from 'next/image';
 
@@ -10,54 +10,63 @@ export default function CategoriesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const fetchCategories = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError('');
-
-            // Add AbortController to prevent race conditions
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-            const response = await fetch('/api/categories?all=true', {
-                signal: controller.signal,
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            // Handle both response formats for backward compatibility
-            if (data.categories) {
-                setCategories(data.categories);
-            } else if (Array.isArray(data)) {
-                setCategories(data);
-            } else {
-                throw new Error('Invalid response format');
-            }
-
-        } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.log('Fetch aborted');
-                return;
-            }
-            console.error('Error fetching categories:', error);
-            setError(error instanceof Error ? error.message : 'An error occurred while fetching categories');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     useEffect(() => {
+        const controller = new AbortController();
+        
+        const fetchCategories = async () => {
+            try {
+                setLoading(true);
+                setError('');
+
+                const response = await fetch('/api/categories?all=true', {
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Handle both response formats for backward compatibility
+                if (data.categories) {
+                    setCategories(data.categories);
+                } else if (Array.isArray(data)) {
+                    setCategories(data);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+
+            } catch (error: unknown) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.log('Fetch aborted');
+                    return;
+                }
+                console.error('Error fetching categories:', error);
+                setError(error instanceof Error ? error.message : 'An error occurred while fetching categories');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchCategories();
-    }, [fetchCategories]);
+
+        // Cleanup function to abort fetch if component unmounts
+        return () => {
+            controller.abort();
+        };
+    }, []); // Empty dependency array - runs once on mount
+
+    const handleRetry = () => {
+        setLoading(true);
+        setError('');
+        // Force re-mount by updating a key or manually fetch
+        window.location.reload();
+    };
 
     if (loading) {
         return (
@@ -76,7 +85,7 @@ export default function CategoriesPage() {
                 <div className="text-center">
                     <p className="text-red-600 text-lg mb-4">{error}</p>
                     <button
-                        onClick={fetchCategories}
+                        onClick={handleRetry}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                         Try Again
