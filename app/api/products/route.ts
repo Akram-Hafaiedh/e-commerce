@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get('all');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
-    const category = searchParams.get('category');
+    const categories = searchParams.get('categories');
     const featured = searchParams.get('featured');
     const onSale = searchParams.get('onSale');
     const search = searchParams.get('search');
@@ -20,8 +20,11 @@ export async function GET(request: NextRequest) {
       stock: { gt: 0 } // Only products with stock
     };
 
-    if (category) {
-      where.categoryId = category;
+    if (categories) {
+      const categorySlugs = categories.split(',');
+      where.category = {
+        slug: { in: categorySlugs }
+      };
     }
 
     if (featured === 'true') {

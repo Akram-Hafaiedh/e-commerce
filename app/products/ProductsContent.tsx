@@ -58,7 +58,9 @@ export default function ProductsContent() {
         if (activeFilter) params.set('filter', activeFilter);
         if (searchTerm) params.set('search', searchTerm);
         if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
-        if (selectedCategories.length === 1) params.set('category', selectedCategories[0]);
+        if (selectedCategories.length > 0) {
+            params.set('categories', selectedCategories.join(','));
+        }
         if (currentPage > 1) params.set('page', currentPage.toString());
 
         const newUrl = params.toString() ? `/products?${params.toString()}` : '/products';
@@ -77,8 +79,8 @@ export default function ProductsContent() {
                 if (activeFilter === 'featured') params.set('featured', 'true');
                 if (activeFilter === 'onSale') params.set('onSale', 'true');
                 if (searchTerm) params.set('search', searchTerm);
-                if (selectedCategories.length === 1) {
-                    params.set('category', selectedCategories[0]);
+                if (selectedCategories.length > 0) {
+                    params.set('categories', selectedCategories.join(','));
                 }
 
                 const response = await fetch(`/api/products?${params.toString()}`);
@@ -121,13 +123,13 @@ export default function ProductsContent() {
     useEffect(() => {
         const initialSearch = searchParams.get('search');
         const initialSort = searchParams.get('sort');
-        const initialCategory = searchParams.get('category');
+        const initialCategories = searchParams.get('categories');
         const initialFilter = searchParams.get('filter');
         const initialPage = searchParams.get('page');
 
         if (initialSearch) setSearchTerm(initialSearch);
         if (initialSort) setSortBy(initialSort);
-        if (initialCategory) setSelectedCategories([initialCategory]);
+        if (initialCategories) setSelectedCategories(initialCategories.split(','));
         if (initialFilter) setActiveFilter(initialFilter);
         if (initialPage) setCurrentPage(Number(initialPage));
     }, [searchParams]);
@@ -173,13 +175,15 @@ export default function ProductsContent() {
                             <h1 className="text-3xl font-bold text-gray-900 mb-2">
                                 {activeFilter === 'featured' && 'Featured Products'}
                                 {activeFilter === 'onSale' && 'Products on Sale'}
-                                {activeCategory && `${categories.find((c: Category) => c.slug === activeCategory)?.name} Products`}
+                                {selectedCategories.length === 1 && `${categories.find((c: Category) => c.slug === selectedCategories[0])?.name} Products`}
+                                {selectedCategories.length > 1 && `${selectedCategories.length} Categories`}
                                 {!activeFilter && !activeCategory && 'All Products'}
                             </h1>
                             <p className="text-gray-600">
                                 {activeFilter === 'featured' && 'Handpicked selection of our premium products'}
                                 {activeFilter === 'onSale' && 'Amazing deals and discounts available now'}
-                                {activeCategory && `Explore our ${categories.find((c: Category) => c.slug === activeCategory)?.name?.toLowerCase()} collection`}
+                                {selectedCategories.length === 1 && `Explore our ${categories.find((c: Category) => c.slug === selectedCategories[0])?.name?.toLowerCase()} collection`}
+                                {selectedCategories.length > 1 && 'Browse products from multiple categories'}
                                 {!activeFilter && !activeCategory && 'Discover our wide range of high-quality products at competitive prices.'}
                             </p>
                         </div>
@@ -229,8 +233,8 @@ export default function ProductsContent() {
                                         <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                                             {activeFilter === 'featured' && 'Featured'}
                                             {activeFilter === 'onSale' && 'On Sale'}
-                                            {activeCategory && `${categories.find((c: Category) => c.slug === activeCategory)?.name}`}
-                                        </span>
+                                            {selectedCategories.length === 1 && `${categories.find((c: Category) => c.slug === selectedCategories[0])?.name}`}
+                                            {selectedCategories.length > 1 && `${selectedCategories.length} Categories`}                                        </span>
                                     )}
                                 </>
                             ) : (
