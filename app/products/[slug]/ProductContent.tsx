@@ -19,20 +19,26 @@ export default function ProductContent({ product, category }: ProductContentProp
 
     // Fetch related products
     useEffect(() => {
+        console.log('[CLIENT] ProductContent mounted, product:', product.id);
         async function fetchRelatedProducts() {
             try {
+                console.log('[CLIENT] Fetching related products for category:', product.category.id);
                 setLoadingRelated(true);
                 const res = await fetch(`/api/products?category=${product.category.id}&all=true`);
+                console.log('[CLIENT] Related products response status:', res.status);
                 if (res.ok) {
                     const data = await res.json();
+                    console.log('[CLIENT] Related products count:', data.length);
                     // Filter out current product and limit to 4
                     const filtered = data
                         .filter((p: Product) => p.id !== product.id)
                         .slice(0, 4);
                     setRelatedProducts(filtered);
+                } else {
+                    console.error('[CLIENT] Failed to fetch related products:', res.statusText);
                 }
             } catch (error) {
-                console.error('Error fetching related products:', error);
+                console.error('[CLIENT] Error fetching related products:', error);
             } finally {
                 setLoadingRelated(false);
             }
@@ -191,7 +197,7 @@ export default function ProductContent({ product, category }: ProductContentProp
                             <div className="flex items-center space-x-4">
                                 <span className="text-gray-700 font-medium">Quantity:</span>
                                 <div className="flex items-center border border-gray-300 rounded-lg">
-                                    <button 
+                                    <button
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={() => handleQuantityChange(quantity - 1)}
                                         disabled={quantity <= 1}
@@ -199,7 +205,7 @@ export default function ProductContent({ product, category }: ProductContentProp
                                         -
                                     </button>
                                     <span className="px-4 py-2 border-l border-r border-gray-300">{quantity}</span>
-                                    <button 
+                                    <button
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={() => handleQuantityChange(quantity + 1)}
                                         disabled={quantity >= Math.min(10, product.stock)}
@@ -214,7 +220,7 @@ export default function ProductContent({ product, category }: ProductContentProp
 
                             {/* Action Buttons */}
                             <div className="flex space-x-4">
-                                <button 
+                                <button
                                     className="flex-1 bg-blue-600 text-white py-4 px-6 rounded-xl hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={handleAddToCart}
                                     disabled={product.stock === 0}
@@ -292,7 +298,7 @@ export default function ProductContent({ product, category }: ProductContentProp
                 {/* Related Products */}
                 <div className="mt-16">
                     <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Products</h2>
-                    
+
                     {loadingRelated ? (
                         <div className="text-center py-12">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>

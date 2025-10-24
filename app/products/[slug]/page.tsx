@@ -10,13 +10,14 @@ interface ProductPageProps {
     params: { slug: string };
 }
 
-// Define the return type for getProduct
 type ProductWithCategory = Prisma.ProductGetPayload<{
     include: { category: true }
 }>;
 
 async function getProduct(slug: string): Promise<ProductWithCategory | null> {
+    console.log('[SERVER] Starting getProduct for slug:', slug);
     try {
+        console.log('[SERVER] Attempting Prisma query...');
         const product = await prisma.product.findUnique({
             where: { slug },
             include: {
@@ -24,16 +25,34 @@ async function getProduct(slug: string): Promise<ProductWithCategory | null> {
             }
         });
 
+        if (product) {
+            console.log('[SERVER] Product found:', product.id, product.name);
+        } else {
+            console.log('[SERVER] No product found for slug:', slug);
+        }
+
         return product;
     } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error('[SERVER] Error fetching product:', error);
+        console.error('[SERVER] Error details:', {
+            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        });
         return null;
     }
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
+    console.log('[SERVER] ProductPage rendering for params:', params);
     const product = await getProduct(params.slug);
-    if (!product) notFound();
+
+    console.log('[SERVER] Product result:', product ? 'Found' : 'Not found');
+    if (!product) {
+        console.log('[SERVER] Calling notFound()');
+        notFound();
+    }
+    console.log('[SERVER] Rendering ProductContent component');
     return <ProductContent product={product} category={product.category} />;
 }
 
