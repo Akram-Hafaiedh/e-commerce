@@ -36,34 +36,65 @@ export default function ProductsContent() {
 
     // Fetch categories on mount
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchProducts = async () => {
+            setLoading(true);
             try {
-                const response = await fetch('/api/categories');
+                const params = new URLSearchParams();
+                params.set('page', currentPage.toString());
+                params.set('limit', ITEMS_PER_PAGE.toString());
+
+                if (activeFilter === 'featured') params.set('featured', 'true');
+                if (activeFilter === 'onSale') params.set('onSale', 'true');
+                if (searchTerm) params.set('search', searchTerm);
+                if (selectedCategories.length === 1) {
+                    params.set('category', selectedCategories[0]);
+                }
+
+                const response = await fetch(`/api/products?${params.toString()}`);
                 if (response.ok) {
-                    const data = await response.json();
-                    setCategories(data.categories);
+                    const data: ProductsResponse = await response.json();
+
+                    // Apply client-side sorting if needed
+                    const sortedProducts = [...data.products];
+                    switch (sortBy) {
+                        case 'price-low':
+                            sortedProducts.sort((a, b) => a.price - b.price);
+                            break;
+                        case 'price-high':
+                            sortedProducts.sort((a, b) => b.price - a.price);
+                            break;
+                        case 'name':
+                            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+                            break;
+                        case 'rating':
+                            sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                            break;
+                    }
+
+                    setProducts(sortedProducts);
+                    setTotalPages(data.totalPages);
+                    setTotalProducts(data.total);
+
+                    // UPDATE URL HERE (after fetch completes)
+                    const urlParams = new URLSearchParams();
+                    if (activeFilter) urlParams.set('filter', activeFilter);
+                    if (searchTerm) urlParams.set('search', searchTerm);
+                    if (sortBy && sortBy !== 'newest') urlParams.set('sort', sortBy);
+                    if (selectedCategories.length === 1) urlParams.set('category', selectedCategories[0]);
+                    if (currentPage > 1) urlParams.set('page', currentPage.toString());
+
+                    const newUrl = urlParams.toString() ? `/products?${urlParams.toString()}` : '/products';
+                    router.replace(newUrl, { scroll: false });
                 }
             } catch (error) {
-                console.error('Error fetching categories:', error);
+                console.error('Error fetching products:', error);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchCategories();
-    }, []);
 
-    // Initialize state from URL
-    useEffect(() => {
-        const filter = searchParams.get('filter');
-        const sort = searchParams.get('sort');
-        const search = searchParams.get('search');
-        const category = searchParams.get('category');
-        const page = searchParams.get('page');
-
-        if (filter) setActiveFilter(filter);
-        if (sort) setSortBy(sort);
-        if (search) setSearchTerm(search);
-        if (category) setSelectedCategories([category]);
-        if (page) setCurrentPage(parseInt(page));
-    }, [searchParams]);
+        fetchProducts();
+    }, [currentPage, activeFilter, searchTerm, selectedCategories, sortBy, router]);
 
     // Fetch products whenever filters change
     useEffect(() => {
@@ -312,8 +343,8 @@ export default function ProductsContent() {
                                                 setCurrentPage(1);
                                             }}
                                             className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeFilter === 'featured'
-                                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             ⭐ Featured Products
@@ -326,8 +357,8 @@ export default function ProductsContent() {
                                                 setCurrentPage(1);
                                             }}
                                             className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${activeFilter === 'onSale'
-                                                    ? 'bg-red-100 text-red-800 border border-red-300'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-red-100 text-red-800 border border-red-300'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             🔥 On Sale
@@ -428,8 +459,8 @@ export default function ProductsContent() {
                                                         key={pageNum}
                                                         onClick={() => handlePageChange(pageNum)}
                                                         className={`px-4 py-2 border rounded-lg transition-colors ${currentPage === pageNum
-                                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                            ? 'bg-blue-600 text-white border-blue-600'
+                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                             }`}
                                                     >
                                                         {pageNum}
