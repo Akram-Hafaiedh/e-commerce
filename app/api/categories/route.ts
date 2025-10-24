@@ -1,31 +1,32 @@
 import { prisma } from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
-        const { searchParams } = new URL(request.url);
-        const all = searchParams.get('all');
-
-        if (all === 'true') {
-            const categories = await prisma.category.findMany({
-                orderBy: { name: 'asc' }
-            });
-
-            return NextResponse.json(categories);
-        }
-
-        // Regular response with products included
         const categories = await prisma.category.findMany({
-            include: {
-                products: true
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                description: true,
+                image: true,
+                featured: true,
+                createdAt: true,
+                updatedAt: true,
+                // Don't include products to reduce payload size
+                _count: {
+                    select: {
+                        products: true
+                    }
+                }
             },
             orderBy: { name: 'asc' }
         });
 
-        return NextResponse.json(
-            { message: 'Categories fetched successfully', categories },
-            { status: 200 }
-        );
+        return NextResponse.json({
+            categories
+        });
+
     } catch (error) {
         console.error('Error fetching categories:', error);
         return NextResponse.json(

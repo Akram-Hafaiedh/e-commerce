@@ -38,20 +38,35 @@ export default function CategoryPage() {
                     return;
                 }
                 const categoryData = await categoryRes.json();
+                
+                // Check if category data is valid
+                if (!categoryData || categoryData.error) {
+                    setError(true);
+                    setLoading(false);
+                    return;
+                }
+                
                 setCategory(categoryData);
-
-                // Fetch all categories for sidebar
-                const categoriesRes = await fetch('/api/categories?all=true');
-                if (categoriesRes.ok) {
-                    const categoriesData = await categoriesRes.json();
-                    setAllCategories(categoriesData);
+                
+                // If category has products included, use them
+                if (categoryData.products && Array.isArray(categoryData.products)) {
+                    setCategoryProducts(categoryData.products);
+                } else {
+                    // Fallback: fetch products separately
+                    const productsRes = await fetch(`/api/products?category=${slug}`);
+                    if (productsRes.ok) {
+                        const productsData = await productsRes.json();
+                        // Handle different response formats
+                        setCategoryProducts(productsData.products || productsData || []);
+                    }
                 }
 
-                // Fetch products for this category
-                const productsRes = await fetch(`/api/products?category=${categoryData.id}&all=true`);
-                if (productsRes.ok) {
-                    const productsData = await productsRes.json();
-                    setCategoryProducts(productsData);
+                // Fetch all categories for sidebar
+                const categoriesRes = await fetch('/api/categories');
+                if (categoriesRes.ok) {
+                    const categoriesData = await categoriesRes.json();
+                    // Handle different response formats
+                    setAllCategories(categoriesData.categories || categoriesData || []);
                 }
 
             } catch (err) {
@@ -75,7 +90,7 @@ export default function CategoryPage() {
         if (searchTerm) {
             filtered = filtered.filter(product =>
                 product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                product.description.toLowerCase().includes(searchTerm.toLowerCase())
+                (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         }
 
@@ -93,6 +108,8 @@ export default function CategoryPage() {
                     return b.price - a.price;
                 case 'name':
                     return a.name.localeCompare(b.name);
+                case 'newest':
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                 default:
                     return 0;
             }
@@ -113,15 +130,17 @@ export default function CategoryPage() {
         }
         const prices = categoryProducts.map(p => p.price);
         return {
-            min: Math.min(...prices),
-            max: Math.max(...prices)
+            min: Math.floor(Math.min(...prices)),
+            max: Math.ceil(Math.max(...prices))
         };
     }, [categoryProducts]);
 
     // Update price range when price stats change
     useEffect(() => {
-        setPriceRange([priceStats.min, priceStats.max]);
-    }, [priceStats]);
+        if (categoryProducts.length > 0) {
+            setPriceRange([priceStats.min, priceStats.max]);
+        }
+    }, [priceStats, categoryProducts.length]);
 
     // Reset filters when category changes
     useEffect(() => {
@@ -195,8 +214,8 @@ export default function CategoryPage() {
                                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                     />
                                     <div className="flex justify-between text-sm text-gray-600">
-                                        <span>${priceRange[0].toFixed(2)}</span>
-                                        <span>${priceRange[1].toFixed(2)}</span>
+                                        <span>${priceRange[0]}</span>
+                                        <span>${priceRange[1]}</span>
                                     </div>
                                 </div>
                             </div>
@@ -212,6 +231,7 @@ export default function CategoryPage() {
                                     <option value="name">Name (A-Z)</option>
                                     <option value="price-low">Price (Low to High)</option>
                                     <option value="price-high">Price (High to Low)</option>
+                                    <option value="newest">Newest First</option>
                                 </select>
                             </div>
 

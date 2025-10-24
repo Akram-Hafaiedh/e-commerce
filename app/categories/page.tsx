@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Category } from '@/types/category';
 import Image from 'next/image';
 
@@ -10,28 +10,54 @@ export default function CategoriesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-    async function fetchCategories() {
+    const fetchCategories = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/categories');
+            setError('');
 
-            if (response.ok) {
-                const data = await response.json();
-                setCategories(data.categories);
-            } else {
-                setError('Failed to load categories');
+            // Add AbortController to prevent race conditions
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            const response = await fetch('/api/categories?all=true', {
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-        } catch (error) {
+            const data = await response.json();
+
+            // Handle both response formats for backward compatibility
+            if (data.categories) {
+                setCategories(data.categories);
+            } else if (Array.isArray(data)) {
+                setCategories(data);
+            } else {
+                throw new Error('Invalid response format');
+            }
+
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log('Fetch aborted');
+                return;
+            }
             console.error('Error fetching categories:', error);
-            setError('An error occurred while fetching categories');
+            setError(error instanceof Error ? error.message : 'An error occurred while fetching categories');
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
 
     if (loading) {
         return (
@@ -48,10 +74,10 @@ export default function CategoriesPage() {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-red-600 text-lg">{error}</p>
+                    <p className="text-red-600 text-lg mb-4">{error}</p>
                     <button
                         onClick={fetchCategories}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                         Try Again
                     </button>
@@ -59,6 +85,7 @@ export default function CategoriesPage() {
             </div>
         );
     }
+
     return (
         <div className="min-h-screen bg-white">
             <div className="container mx-auto px-4 py-8">
@@ -66,7 +93,7 @@ export default function CategoriesPage() {
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold text-gray-900 mb-4">Product Categories</h1>
                     <p className="text-gray-600 max-w-2xl mx-auto">
-                        Browse our wide range of product categories. Find exactly what you&#39;re looking for.
+                        Browse our wide range of product categories. Find exactly what you&apos;re looking for.
                     </p>
                 </div>
 
