@@ -4,7 +4,10 @@ export interface Category {
     slug: string;
     description: string;
     image: string;
-    featured: boolean; 
+    featured: boolean;
+    parentId?: string;
+    parent?: Category; // Optional parent category
+    children?: Category[]; // Optional subcategories
     createdAt: Date;
     updatedAt: Date;
 }

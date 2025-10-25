@@ -8,9 +8,31 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const category = await prisma.category.findUnique({
             where: { id },
             include: {
-                products: {
-                    where: { stock: { gt: 0 } },
-                    orderBy: { createdAt: 'desc' }
+                children: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        description: true,
+                        image: true,
+                        featured: true
+                    }
+                },
+                parent: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        description: true,
+                        image: true,
+                        featured: true
+                    }
+                },
+                _count: {
+                    select: {
+                        products: true,
+                        children: true
+                    }
                 }
             }
         });

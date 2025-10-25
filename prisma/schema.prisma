@@ -27,38 +27,44 @@ model User {
 }
 
 model Product {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
   description   String
   price         Float
   originalPrice Float?
   image         String
-  slug          String      @unique
-  featured      Boolean     @default(false)
-  onSale        Boolean     @default(false)
+  slug          String   @unique
+  featured      Boolean  @default(false)
+  onSale        Boolean  @default(false)
   rating        Float?
-  reviewCount   Int         @default(0)
-  stock         Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  reviewCount   Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   categoryId    String
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  category      Category    @relation(fields: [categoryId], references: [id])
+
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  category       Category        @relation(fields: [categoryId], references: [id])
+  stockMovements StockMovement[]
+  Inventory      Inventory[]
 
   @@map("products")
 }
 
 model Category {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  slug        String    @unique
+  slug        String   @unique
   description String
   image       String
-  featured    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parentId String? // Optional self-relation for subcategories
+  parent   Category?  @relation("CategoryToSubcategories", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToSubcategories")
+  Product  Product[]
 
   @@map("categories")
 }
@@ -90,27 +96,71 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   String
-  product   Product @relation(fields: [productId], references: [id])
-  productId String
-  quantity  Int
-  price     Float
+  id          String     @id @default(cuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  price       Float
+  product     Product    @relation(fields: [productId], references: [id])
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id])
 
   @@map("order_items")
 }
 
 model CartItem {
-  id        String  @id @default(cuid())
-  quantity  Int     @default(1)
+  id        String     @id @default(cuid())
+  quantity  Int        @default(1)
   cartId    String
   productId String
-  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+  status    CartStatus @default(ACTIVE)
+  cart      Cart       @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product    @relation(fields: [productId], references: [id])
+  createdAt DateTime   @default(now())
 
   @@unique([cartId, productId])
+  @@index([cartId, status])
   @@map("cart_items")
+}
+
+model Warehouse {
+  id         String        @id @default(cuid())
+  name       String
+  code       String        @unique
+  address    String
+  city       String
+  country    String
+  postalCode String
+  type       WarehouseType @default(MAIN)
+  isActive   Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relations
+  stockMovements StockMovement[]
+  inventory      Inventory[]
+  OrderItem      OrderItem[]
+
+  @@map("warehouses")
+}
+
+model Inventory {
+  id           String   @id @default(cuid())
+  productId    String
+  warehouseId  String
+  quantity     Int      @default(0)
+  minStock     Int?     @default(10)
+  maxStock     Int?
+  reorderPoint Int?     @default(20)
+  lastUpdated  DateTime @default(now())
+
+  // Relations
+  product   Product   @relation(fields: [productId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@unique([productId, warehouseId])
+  @@map("inventory")
 }
 
 model Cart {
@@ -126,9 +176,41 @@ model Cart {
   @@map("carts")
 }
 
-enum UserRole {
-  USER
-  ADMIN
+model StockMovement {
+  id           String       @id @default(cuid())
+  productId    String
+  warehouseId  String
+  quantity     Int
+  stockAfter   Int
+  movementType MovementType
+  referenceId  String?
+  note         String?
+  createdAt    DateTime     @default(now())
+  createdBy    String?
+
+  product   Product   @relation(fields: [productId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@map("stock_movements")
+}
+
+enum MovementType {
+  SALE
+  RETURN
+  RESTOCK
+  ADJUSTMENT
+  RESERVATION
+  RELEASE
+  TRANSFER_IN
+  TRANSFER_OUT
+  DAMAGED
+}
+
+enum WarehouseType {
+  MAIN
+  REGIONAL
+  STORE
+  VIRTUAL
 }
 
 enum OrderStatus {
@@ -137,4 +219,16 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   PENDING
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum CartStatus {
+  ACTIVE
+  SAVED_FOR_LATER
+  PURCHASED
+  ABANDONED
 }

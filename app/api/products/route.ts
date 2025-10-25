@@ -17,7 +17,11 @@ export async function GET(request: NextRequest) {
 
     // Build where clause with proper Prisma type
     const where: Prisma.ProductWhereInput = {
-      stock: { gt: 0 } // Only products with stock
+      Inventory: {
+        some: {
+          quantity: { gt: 0 } // Only products with total stock > 0
+        }
+      }
     };
 
     if (categories) {
@@ -52,6 +56,11 @@ export async function GET(request: NextRequest) {
               name: true,
               slug: true
             }
+          },
+          Inventory: {
+            select: {
+              quantity: true // Only fetch what we need for summing stock
+            }
           }
         },
         orderBy: {
@@ -59,7 +68,14 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      return NextResponse.json(allProducts);
+      // Compute stock for each product
+      const allProductsWithStock = allProducts.map(product => ({
+        ...product,
+        stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
+        Inventory: undefined // Optional: remove if not needed in response
+      }));
+
+      return NextResponse.json(allProductsWithStock);
     }
 
     const [products, total] = await Promise.all([
@@ -72,6 +88,11 @@ export async function GET(request: NextRequest) {
               name: true,
               slug: true
             }
+          },
+          Inventory: {
+            select: {
+              quantity: true // Only fetch what we need for summing stock
+            }
           }
         },
         skip,
@@ -83,8 +104,15 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where })
     ]);
 
+    // Compute stock for each product
+    const productsWithStock = products.map(product => ({
+      ...product,
+      stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
+      Inventory: undefined // Optional: remove if not needed in response
+    }));
+
     return NextResponse.json({
-      products,
+      products: productsWithStock,
       total,
       page,
       totalPages: Math.ceil(total / limit),

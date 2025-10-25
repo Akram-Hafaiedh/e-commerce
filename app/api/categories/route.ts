@@ -1,26 +1,57 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
+        const { searchParams } = new URL(request.url);
+        const all = searchParams.get('all');
+        const parent = searchParams.get('parent');
+        const featured = searchParams.get('featured');
+
+
+        const where: Prisma.CategoryWhereInput = {};
+
+        if (parent) {
+            const parentCategory = await prisma.category.findUnique({
+                where: { slug: parent }
+            });
+
+            if (parentCategory) {
+                where.parentId = parentCategory.id;
+            } else {
+                return NextResponse.json({ categories: [] });
+            }
+        } else {
+            where.parentId = null;
+        }
+
+        if (featured === 'true') {
+            where.featured = true;
+        }
         const categories = await prisma.category.findMany({
-            select: {
-                id: true,
-                name: true,
-                slug: true,
-                description: true,
-                image: true,
-                featured: true,
-                createdAt: true,
-                updatedAt: true,
-                // Don't include products to reduce payload size
+            where,
+            include: {
+                children: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        description: true,
+                        image: true,
+                        featured: true
+                    }
+                },
                 _count: {
                     select: {
-                        products: true
+                        products: true,
+                        children: true
                     }
                 }
             },
-            orderBy: { name: 'asc' }
+            orderBy: {
+                name: 'asc'
+            }
         });
 
         return NextResponse.json({
