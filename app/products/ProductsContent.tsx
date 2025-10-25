@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
-import { Product } from '@/types/product';
+import { ProductWithStock } from '@/types/product';
 import { Category } from '@/types/category';
 
 const ITEMS_PER_PAGE = 12;
 
 interface ProductsResponse {
-    products: Product[];
+    products: ProductWithStock[];
     total: number;
     page: number;
     totalPages: number;
@@ -22,7 +22,7 @@ export default function ProductsContent() {
     const router = useRouter();
 
     // State
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<ProductWithStock[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -399,7 +399,7 @@ export default function ProductsContent() {
                         ) : products.length > 0 ? (
                             <>
                                 <div className={gridClasses}>
-                                    {products.map((product: Product) => (
+                                    {products.map((product: ProductWithStock) => (
                                         <ProductCard key={product.id} product={product} />
                                     ))}
                                 </div>
