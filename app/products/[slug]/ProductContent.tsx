@@ -2,20 +2,22 @@
 
 import { useCart } from "@/app/context/CartContext";
 import { Category } from "@/types/category";
-import { Product } from "@/types/product";
+import { Product, ProductWithStock } from "@/types/product";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
 interface ProductContentProps {
-    product: Product;
+    product: ProductWithStock; // Use the proper type
     category?: Category;
 }
 
 export default function ProductContent({ product, category }: ProductContentProps) {
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
-    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+    const [relatedProducts, setRelatedProducts] = useState<ProductWithStock[]>([]);
     const [loadingRelated, setLoadingRelated] = useState(true);
+
+    const currentStock = product.stock || 0;
 
     // Fetch related products
     useEffect(() => {
@@ -96,10 +98,10 @@ export default function ProductContent({ product, category }: ProductContentProp
                                 <span className="text-4xl">📦</span>
                             </div>
                             {/* Badge */}
-                            {product.stock > 0 && (
+                            {currentStock > 0 && (
                                 <div className="absolute top-4 left-4">
                                     <span className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
-                                        In Stock ({product.stock} available)
+                                        In Stock ({currentStock} available)
                                     </span>
                                 </div>
                             )}
@@ -208,7 +210,7 @@ export default function ProductContent({ product, category }: ProductContentProp
                                     <button
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={() => handleQuantityChange(quantity + 1)}
-                                        disabled={quantity >= Math.min(10, product.stock)}
+                                        disabled={quantity >= Math.min(10, currentStock)}
                                     >
                                         +
                                     </button>

@@ -32,6 +32,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                     orderBy: {
                         createdAt: 'desc'
                     }
+                },
+                parent: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                    }
+                },
+                children: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                    }
                 }
             }
         });
@@ -72,6 +86,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const description = formData.get('description') as string;
         const featured = formData.get('featured') === 'true';
         const slug = formData.get('slug') as string;
+        const parentId = formData.get('parentId') as string;
 
         if (!name || !description || !slug) {
             return NextResponse.json(
@@ -124,6 +139,26 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             }
         }
 
+        if (parentId === id) {
+            return NextResponse.json(
+                { error: 'Category cannot be its own parent' },
+                { status: 400 }
+            );
+        }
+
+        // Validate parent category exists if provided
+        if (parentId) {
+            const parentCategory = await prisma.category.findUnique({
+                where: { id: parentId }
+            });
+            if (!parentCategory) {
+                return NextResponse.json(
+                    { error: 'Parent category not found' },
+                    { status: 400 }
+                );
+            }
+        }
+
         if (imageFile && imageFile.size > 0) {
             const timestamp = Date.now();
             const fileExtension = imageFile.name.split('.').pop();
@@ -147,9 +182,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 image: imageUrl,
                 featured,
                 slug,
+                parentId: parentId || null,
             },
             include: {
-                products: true
+                products: true,
+                parent: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                    }
+                },
+                children: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                    }
+                }
             }
         });
 
@@ -189,6 +239,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             include: {
                 products: {
                     take: 1
+                },
+                children: {
+                    take: 1
                 }
             }
         });
@@ -199,6 +252,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
                 { status: 400 }
             );
         }
+        if (categoryWithProducts && categoryWithProducts.children.length > 0) {
+            return NextResponse.json(
+                { error: 'Cannot delete category with subcategories. Please remove subcategories first.' },
+                { status: 400 }
+            );
+        }
+
 
         await prisma.category.delete({
             where: { id }

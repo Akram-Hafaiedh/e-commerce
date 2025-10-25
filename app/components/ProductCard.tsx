@@ -2,10 +2,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { Product } from '@/types/product';
+import { ProductWithStock } from '@/types/product';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductWithStock;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {

@@ -4,34 +4,42 @@ export const revalidate = 3600; // 1 hour
 import { notFound } from 'next/navigation';
 import ProductContent from './ProductContent';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { ProductWithStock } from '@/types/product';
 
 interface ProductPageProps {
     params: { slug: string };
 }
 
-type ProductWithCategory = Prisma.ProductGetPayload<{
-    include: { category: true }
-}>;
 
-async function getProduct(slug: string): Promise<ProductWithCategory | null> {
+async function getProduct(slug: string): Promise<ProductWithStock | null> {
     console.log('[SERVER] Starting getProduct for slug:', slug);
     try {
-        console.log('[SERVER] Attempting Prisma query...');
         const product = await prisma.product.findUnique({
             where: { slug },
             include: {
-                category: true
+                category: true,
+                Inventory: {
+                    select: {
+                        quantity: true
+                    }
+                }
             }
         });
 
         if (product) {
             console.log('[SERVER] Product found:', product.id, product.name);
+            const totalStock = product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0);
+
+            // Return product with calculated stock
+            return {
+                ...product,
+                stock: totalStock
+            };
         } else {
             console.log('[SERVER] No product found for slug:', slug);
+            return null;
         }
 
-        return product;
     } catch (error) {
         console.error('[SERVER] Error fetching product:', error);
         console.error('[SERVER] Error details:', {

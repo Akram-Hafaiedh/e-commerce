@@ -5,7 +5,7 @@ export interface Category {
     description: string;
     image: string;
     featured: boolean;
-    parentId?: string;
+    parentId: string | null;
     parent?: Category; // Optional parent category
     children?: Category[]; // Optional subcategories
     createdAt: Date;

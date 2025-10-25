@@ -3,14 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import Link from 'next/link';
-import { Product } from '@/types/product';
+import { ProductWithStock } from '@/types/product';
 import Image from 'next/image';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function ProductsManagement() {
     const { isAdmin, isLoading } = useAuth();
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<ProductWithStock[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -364,8 +364,8 @@ export default function ProductsManagement() {
                                                 key={pageNum}
                                                 onClick={() => handlePageChange(pageNum)}
                                                 className={`px-4 py-2 border rounded-lg transition-colors font-medium ${currentPage === pageNum
-                                                        ? 'bg-blue-600 text-white border-blue-600'
-                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    ? 'bg-blue-600 text-white border-blue-600'
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                     }`}
                                             >
                                                 {pageNum}

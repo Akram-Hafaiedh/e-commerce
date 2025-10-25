@@ -31,7 +31,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
     onSale: false,
     rating: '',
     reviewCount: '',
-    stock: '',
   });
 
   useEffect(() => {
@@ -52,7 +51,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
         onSale: product.onSale,
         rating: product.rating?.toString() || '',
         reviewCount: product.reviewCount ? product.reviewCount.toString() : '',
-        stock: product.stock ? product.stock.toString() : '',
       });
       setImagePreview(product.image);
     }
@@ -136,7 +134,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
       formDataToSend.append('slug', formData.slug);
       formDataToSend.append('featured', String(formData.featured));
       formDataToSend.append('onSale', String(formData.onSale));
-      formDataToSend.append('stock', formData.stock);
       formDataToSend.append('reviewCount', formData.reviewCount);
 
       if (formData.originalPrice) {
@@ -282,24 +279,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                   placeholder="0.00"
                 />
               </div>
-
-              <div>
-                <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
-                  Stock Quantity *
-                </label>
-                <input
-                  type="number"
-                  id="stock"
-                  name="stock"
-                  required
-                  min="0"
-                  value={formData.stock}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0"
-                />
-              </div>
-
               <div>
                 <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
                   Rating (0-5)

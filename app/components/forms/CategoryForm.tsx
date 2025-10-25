@@ -16,13 +16,35 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
     const [error, setError] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         slug: '',
         description: '',
         image: '',
         featured: false,
+        parentId: '',
     });
+
+    // Fetch categories for parent dropdown
+    useEffect(() => {
+        async function fetchCategories() {
+            setLoadingCategories(true);
+            try {
+                const response = await fetch('/api/admin/categories?all=true');
+                if (response.ok) {
+                    const data = await response.json();
+                    setCategories(data.categories || data);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            } finally {
+                setLoadingCategories(false);
+            }
+        }
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         if (category && isEditing) {
@@ -32,12 +54,13 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                 description: category.description,
                 image: category.image,
                 featured: category.featured || false,
+                parentId: category.parentId || '',
             });
             setImagePreview(category.image);
         }
     }, [category, isEditing]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         setFormData(prev => ({
             ...prev,
@@ -54,7 +77,6 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
         }
     };
 
-
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -64,7 +86,7 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                 return;
             }
 
-            /// Validate file size (e.g., 5MB max)
+            // Validate file size (e.g., 5MB max)
             if (file.size > 5 * 1024 * 1024) {
                 setError('Image size should be less than 5MB');
                 return;
@@ -86,18 +108,18 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
         setError('');
 
         try {
-
             const formDataToSend = new FormData();
             formDataToSend.append('name', formData.name);
             formDataToSend.append('slug', formData.slug);
             formDataToSend.append('description', formData.description);
             formDataToSend.append('featured', String(formData.featured));
+            formDataToSend.append('parentId', formData.parentId);
+            
             if (imageFile) {
                 formDataToSend.append('image', imageFile);
             } else if (formData.image) {
                 formDataToSend.append('imageUrl', formData.image);
             }
-
 
             const url = isEditing ? `/api/admin/categories/${category?.id}` : '/api/admin/categories';
             const method = isEditing ? 'PUT' : 'POST';
@@ -121,6 +143,27 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
             setLoading(false);
         }
     };
+
+    // Filter out current category and its children from parent options to prevent cycles
+    const getParentOptions = () => {
+        if (!isEditing || !category) {
+            return categories;
+        }
+
+        const filterOutSelfAndChildren = (cat: Category, currentId: string): boolean => {
+            if (cat.id === currentId) return false;
+            if (cat.children) {
+                for (const child of cat.children) {
+                    if (!filterOutSelfAndChildren(child, currentId)) return false;
+                }
+            }
+            return true;
+        };
+
+        return categories.filter(cat => filterOutSelfAndChildren(cat, category.id));
+    };
+
+    const parentOptions = getParentOptions();
 
     return (
         <div className="min-h-screen bg-gray-50 py-8">
@@ -188,6 +231,34 @@ export default function CategoryForm({ category, isEditing = false }: CategoryFo
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Enter category description"
                             />
+                        </div>
+
+                        {/* Parent Category Field */}
+                        <div>
+                            <label htmlFor="parentId" className="block text-sm font-medium text-gray-700">
+                                Parent Category
+                            </label>
+                            <select
+                                id="parentId"
+                                name="parentId"
+                                value={formData.parentId}
+                                onChange={handleChange}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">No Parent (Top-level Category)</option>
+                                {loadingCategories ? (
+                                    <option disabled>Loading categories...</option>
+                                ) : (
+                                    parentOptions.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </option>
+                                    ))
+                                )}
+                            </select>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Select a parent category to make this a subcategory. Leave empty for top-level categories.
+                            </p>
                         </div>
 
                         <div>

@@ -31,6 +31,20 @@ export async function GET() {
                     orderBy: {
                         createdAt: 'desc'
                     }
+                },
+                parent: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                    }
+                },
+                children: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                    }
                 }
             },
             orderBy: {
@@ -69,6 +83,7 @@ export async function POST(request: NextRequest) {
         const description = formData.get('description') as string;
         const featured = formData.get('featured') === 'true';
         const slug = formData.get('slug') as string;
+        const parentId = formData.get('parentId') as string;
 
         if (!name || !description || !slug) {
             return NextResponse.json(
@@ -120,6 +135,17 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+        if (parentId) {
+            const parentCategory = await prisma.category.findUnique({
+                where: { id: parentId }
+            });
+            if (!parentCategory) {
+                return NextResponse.json(
+                    { error: 'Parent category not found' },
+                    { status: 400 }
+                );
+            }
+        }
 
 
         const newCategory = await prisma.category.create({
@@ -128,10 +154,25 @@ export async function POST(request: NextRequest) {
                 description,
                 image: imageUrl,
                 featured,
-                slug
+                slug,
+                parentId: parentId || null,
             },
             include: {
-                products: true
+                products: true,
+                parent: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                },
+                children: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                }
             }
         });
 
