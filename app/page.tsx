@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Product } from '@/types/product';
+import { ProductWithStock } from '@/types/product';
 import { Category } from '@/types/category';
 import ProductCard from './components/ProductCard';
 import AnimatedProductSlider from './components/AnimatedProductSlider';
 import Image from 'next/image';
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
