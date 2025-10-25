@@ -80,6 +80,26 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </Link>
+                    <Link
+                        href="/admin/warehouses"
+                        className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow duration-200"
+                    >
+                        <div className="px-4 py-5 sm:p-6">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                                    <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v3h12a4 4 0 01-8 0v3a4 4 0 01 8 0h12zm0-5v3h12a4 4 0 01-8 0v3a4 4 0 01 8 0h12z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt className="text-sm font-medium text-gray-500 truncate">Warehouses</dt>
+                                        <dd className="text-lg font-medium text-gray-900">Manage Warehouses</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
 
                     {/* Orders Card */}
                     <div className="bg-white overflow-hidden shadow rounded-lg">

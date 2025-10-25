@@ -17,6 +17,7 @@ export default function CategoriesManagement() {
             const response = await fetch('/api/admin/categories');
             if (response.ok) {
                 const data = await response.json();
+                console.log('Response received:', data);
                 setCategories(data.categories);
             } else {
                 setError('Failed to fetch categories');

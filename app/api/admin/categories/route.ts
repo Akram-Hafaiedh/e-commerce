@@ -13,13 +13,6 @@ export async function GET() {
         const categories = await prisma.category.findMany({
             include: {
                 products: {
-                    where: {
-                        Inventory: {
-                            some: {
-                                quantity: { gt: 0 } // Only products with total stock > 0
-                            }
-                        }
-                    },
                     include: {
                         Inventory: {
                             select: {
@@ -61,7 +54,7 @@ export async function GET() {
             }))
         }));
 
-        return NextResponse.json({ message: 'Categories fetched successfully', categoriesWithStock }, { status: 200 });
+        return NextResponse.json({ message: 'Categories fetched successfully', categories: categoriesWithStock }, { status: 200 });
     } catch (error) {
         console.error('Error fetching categories:', error);
         return NextResponse.json(

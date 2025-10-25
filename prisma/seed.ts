@@ -45,6 +45,7 @@ async function seedCategories() {
                 description: 'Latest gadgets and electronics',
                 image: 'https://efozrlihldf284c2.public.blob.vercel-storage.com/categories/electronics-1761056281779.png',
                 featured: true,
+                parentId: null,
             },
             {
                 name: 'Clothing',
@@ -52,6 +53,7 @@ async function seedCategories() {
                 description: 'Fashionable clothing for everyone',
                 image: 'https://efozrlihldf284c2.public.blob.vercel-storage.com/categories/clothing-1761056933411.png',
                 featured: true,
+                parentId: null,
             },
             {
                 name: 'Home & Garden',
@@ -59,6 +61,7 @@ async function seedCategories() {
                 description: 'Everything for your home',
                 image: 'https://efozrlihldf284c2.public.blob.vercel-storage.com/categories/home-garden-1761056973203.png',
                 featured: true,
+                parentId: null,
             },
         ]
 
@@ -100,7 +103,7 @@ async function seedProducts() {
                 onSale: true,
                 rating: 4.8,
                 reviewCount: 124,
-                stock: 15,
+                // stock: 15,
             },
             {
                 name: 'Smartphone',
@@ -113,7 +116,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.9,
                 reviewCount: 78,
-                stock: 8,
+                // stock: 8,
             },
             {
                 name: '4K Smart TV',
@@ -127,7 +130,7 @@ async function seedProducts() {
                 onSale: true,
                 rating: 4.7,
                 reviewCount: 32,
-                stock: 5,
+                // stock: 5,
             },
             {
                 name: 'Bluetooth Speaker',
@@ -140,7 +143,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.4,
                 reviewCount: 24,
-                stock: 20,
+                // stock: 20,
             },
             {
                 name: 'Laptop',
@@ -153,7 +156,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.6,
                 reviewCount: 16,
-                stock: 12,
+                // stock: 12,
             },
             {
                 name: 'Smartwatch',
@@ -166,7 +169,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.2,
                 reviewCount: 8,
-                stock: 30,
+                // stock: 30,
             },
             {
                 name: 'Wireless Mouse',
@@ -179,7 +182,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.1,
                 reviewCount: 6,
-                stock: 40,
+                // stock: 40,
             },
             {
                 name: 'Mechanical Keyboard',
@@ -192,7 +195,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.5,
                 reviewCount: 12,
-                stock: 22,
+                // stock: 22,
             },
             {
                 name: 'Gaming Console',
@@ -205,7 +208,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.9,
                 reviewCount: 36,
-                stock: 7,
+                // stock: 7,
             },
             {
                 name: 'Cotton T-Shirt',
@@ -219,7 +222,7 @@ async function seedProducts() {
                 onSale: true,
                 rating: 4.3,
                 reviewCount: 18,
-                stock: 50,
+                // stock: 50,
             },
             {
                 name: 'Denim Jeans',
@@ -232,7 +235,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.7,
                 reviewCount: 12,
-                stock: 25,
+                // stock: 25,
             },
             {
                 name: 'Designer Hoodie',
@@ -245,7 +248,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.7,
                 reviewCount: 12,
-                stock: 25,
+                // stock: 25,
             },
             {
                 name: 'Leather Jacket',
@@ -258,7 +261,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.8,
                 reviewCount: 8,
-                stock: 10,
+                // stock: 10,
             },
             {
                 name: 'Sneakers',
@@ -271,7 +274,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.5,
                 reviewCount: 14,
-                stock: 35,
+                // stock: 35,
             },
             {
                 name: 'Summer Dress',
@@ -285,7 +288,7 @@ async function seedProducts() {
                 onSale: true,
                 rating: 4.5,
                 reviewCount: 16,
-                stock: 18,
+                // stock: 18,
             },
             {
                 name: 'Wool Scarf',
@@ -298,7 +301,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.3,
                 reviewCount: 10,
-                stock: 40,
+                // stock: 40,
             },
             {
                 name: 'Baseball Cap',
@@ -311,7 +314,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.0,
                 reviewCount: 6,
-                stock: 60,
+                // stock: 60,
             },
             {
                 name: 'Winter Coat',
@@ -324,7 +327,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.6,
                 reviewCount: 8,
-                stock: 14,
+                // stock: 14,
             },
             {
                 name: 'Garden Tools Set',
@@ -338,7 +341,7 @@ async function seedProducts() {
                 onSale: true,
                 rating: 4.8,
                 reviewCount: 12,
-                stock: 10,
+                // stock: 10,
             },
             {
                 name: 'Scented Candle Set',
@@ -351,7 +354,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.6,
                 reviewCount: 10,
-                stock: 30,
+                // stock: 30,
             },
             {
                 name: 'Decorative Plant',
@@ -364,7 +367,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.2,
                 reviewCount: 8,
-                stock: 25,
+                // stock: 25,
             },
             {
                 name: 'Wall Clock',
@@ -377,7 +380,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.3,
                 reviewCount: 9,
-                stock: 20,
+                // stock: 20,
             },
             {
                 name: 'Coffee Maker Deluxe',
@@ -391,7 +394,7 @@ async function seedProducts() {
                 onSale: true,
                 rating: 4.4,
                 reviewCount: 11,
-                stock: 15,
+                // stock: 15,
             },
             {
                 name: 'Vacuum Cleaner',
@@ -404,7 +407,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.5,
                 reviewCount: 14,
-                stock: 18,
+                // stock: 18,
             },
             {
                 name: 'Cookware Set',
@@ -417,7 +420,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.7,
                 reviewCount: 16,
-                stock: 12,
+                // stock: 12,
             },
             {
                 name: 'Table Lamp',
@@ -430,7 +433,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.3,
                 reviewCount: 7,
-                stock: 28,
+                // stock: 28,
             },
             {
                 name: 'Rug Carpet',
@@ -443,7 +446,7 @@ async function seedProducts() {
                 onSale: false,
                 rating: 4.6,
                 reviewCount: 13,
-                stock: 10,
+                // stock: 10,
             },
         ]
 
