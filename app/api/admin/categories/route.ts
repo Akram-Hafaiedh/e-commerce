@@ -14,9 +14,23 @@ export async function GET() {
             include: {
                 products: {
                     where: {
-                        stock: { gt: 0 }
+                        Inventory: {
+                            some: {
+                                quantity: { gt: 0 } // Only products with total stock > 0
+                            }
+                        }
                     },
-                    take: 4
+                    include: {
+                        Inventory: {
+                            select: {
+                                quantity: true // Only fetch quantity for summing
+                            }
+                        }
+                    },
+                    take: 4,
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
                 }
             },
             orderBy: {
@@ -24,7 +38,16 @@ export async function GET() {
             }
         });
 
-        return NextResponse.json({ message: 'Categories fetched successfully', categories }, { status: 200 });
+
+        const categoriesWithStock = categories.map(category => ({
+            ...category,
+            products: category.products.map(product => ({
+                ...product,
+                stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
+            }))
+        }));
+
+        return NextResponse.json({ message: 'Categories fetched successfully', categoriesWithStock }, { status: 200 });
     } catch (error) {
         console.error('Error fetching categories:', error);
         return NextResponse.json(

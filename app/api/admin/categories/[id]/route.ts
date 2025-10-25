@@ -16,7 +16,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             include: {
                 products: {
                     where: {
-                        stock: { gt: 0 }
+                        Inventory: {
+                            some: {
+                                quantity: { gt: 0 } // Only products with total stock > 0
+                            }
+                        }
+                    },
+                    include: {
+                        Inventory: {
+                            select: {
+                                quantity: true // Only fetch quantity for summing
+                            }
+                        }
                     },
                     orderBy: {
                         createdAt: 'desc'
@@ -29,7 +40,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: 'Category not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ message: 'Category fetched successfully', category }, { status: 200 });
+        const categoryWithStock = {
+            ...category,
+            products: category.products.map(product => ({
+                ...product,
+                stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
+            }))
+        };
+
+        return NextResponse.json({ message: 'Category fetched successfully', categoryWithStock }, { status: 200 });
     } catch (error) {
         console.error('Error fetching category:', error);
         return NextResponse.json(

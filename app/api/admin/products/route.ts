@@ -88,9 +88,6 @@ export async function POST(request: NextRequest) {
         const reviewCount = formData.get('reviewCount')
             ? parseInt(formData.get('reviewCount') as string)
             : 0;
-        const stock = formData.get('stock')
-            ? parseInt(formData.get('stock') as string)
-            : 0;
 
 
         // Check if slug already exists
@@ -166,7 +163,6 @@ export async function POST(request: NextRequest) {
                 onSale: onSale || false,
                 rating,
                 reviewCount: reviewCount || 0,
-                stock: stock || 0,
             },
             include: {
                 category: true

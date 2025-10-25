@@ -58,9 +58,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const reviewCount = formData.get('reviewCount')
             ? parseInt(formData.get('reviewCount') as string)
             : 0;
-        const stock = formData.get('stock')
-            ? parseInt(formData.get('stock') as string)
-            : 0;
 
         if (!name || !description || !slug || !categoryId || isNaN(price)) {
             return NextResponse.json(
@@ -151,7 +148,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 onSale,
                 rating,
                 reviewCount,
-                stock,
             },
             include: {
                 category: true
