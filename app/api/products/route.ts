@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
 
     // Build where clause with proper Prisma type
     const where: Prisma.ProductWhereInput = {
-      Inventory: {
-        some: {
-          quantity: { gt: 0 } // Only products with total stock > 0
-        }
-      }
+      // Inventory: {
+      //   some: {
+      //     quantity: { gt: 0 } // Only products with total stock > 0
+      //   }
+      // }
     };
 
     if (categories) {
