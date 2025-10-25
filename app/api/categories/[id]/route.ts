@@ -28,6 +28,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                         featured: true
                     }
                 },
+                products: {
+                    include: {
+                        Inventory: {
+                            select: {
+                                quantity: true
+                            }
+                        }
+                    }
+                },
                 _count: {
                     select: {
                         products: true,

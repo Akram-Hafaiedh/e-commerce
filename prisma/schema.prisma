@@ -64,7 +64,7 @@ model Category {
   parentId String? // Optional self-relation for subcategories
   parent   Category?  @relation("CategoryToSubcategories", fields: [parentId], references: [id])
   children Category[] @relation("CategoryToSubcategories")
-  Product  Product[]
+  products  Product[]
 
   @@map("categories")
 }
