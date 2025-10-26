@@ -61,7 +61,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
       const response = await fetch('/api/admin/categories');
       if (response.ok) {
         const data = await response.json();
-        console.log(Array.isArray(data.categories));
         setCategories(data.categories);
       }
     } catch (error) {
@@ -76,7 +75,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
 
-    // Auto-generate slug from name
     if (name === 'name' && !isEditing) {
       const generatedSlug = value
         .toLowerCase()
@@ -89,13 +87,11 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please select a valid image file');
         return;
       }
 
-      // Validate file size (e.g., 5MB max)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size should be less than 5MB');
         return;
@@ -117,7 +113,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
     setError('');
 
     try {
-      // Validate that either image file or URL is provided
       if (!imageFile && !formData.image && !isEditing) {
         setError('Please provide either an image file or image URL');
         setLoading(false);
@@ -126,7 +121,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
 
       const formDataToSend = new FormData();
 
-      // Append all form fields
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('price', formData.price);
@@ -144,7 +138,6 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
         formDataToSend.append('rating', formData.rating);
       }
 
-      // Append image file if available, otherwise use URL
       if (imageFile) {
         formDataToSend.append('image', imageFile);
       } else if (formData.image) {
@@ -175,169 +168,175 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-sm rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {isEditing ? 'Edit Product' : 'Create New Product'}
-            </h1>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/admin/products')}
+          className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6 transition-colors duration-200 font-medium"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Products
+        </button>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isEditing ? 'Edit Product' : 'Create New Product'}
+          </h1>
+          <p className="mt-2 text-gray-600">
+            {isEditing ? 'Update product details and information' : 'Add a new product to your inventory'}
+          </p>
+        </div>
+
+        {/* Form Card */}
+        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+          <form onSubmit={handleSubmit} className="p-8 space-y-8">
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-4 rounded">
+                <p className="font-medium">Error</p>
+                <p className="text-sm">{error}</p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter product name"
-                />
-              </div>
+            {/* Basic Information Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+                Basic Information
+              </h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="Enter product name"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
-                  Slug *
-                </label>
-                <input
-                  type="text"
-                  id="slug"
-                  name="slug"
-                  required
-                  value={formData.slug}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="product-slug"
-                />
-              </div>
+                <div>
+                  <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-2">
+                    Slug *
+                  </label>
+                  <input
+                    type="text"
+                    id="slug"
+                    name="slug"
+                    required
+                    value={formData.slug}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="product-slug"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-                  Category *
-                </label>
-                <select
-                  id="categoryId"
-                  name="categoryId"
-                  required
-                  value={formData.categoryId}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <select
+                    id="categoryId"
+                    name="categoryId"
+                    required
+                    value={formData.categoryId}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                  Price ($) *
-                </label>
-                <input
-                  type="number"
-                  id="price"
-                  name="price"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="originalPrice" className="block text-sm font-medium text-gray-700">
-                  Original Price ($)
-                </label>
-                <input
-                  type="number"
-                  id="originalPrice"
-                  name="originalPrice"
-                  min="0"
-                  step="0.01"
-                  value={formData.originalPrice}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
-                  Rating (0-5)
-                </label>
-                <input
-                  type="number"
-                  id="rating"
-                  name="rating"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  value={formData.rating}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.0"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="reviewCount" className="block text-sm font-medium text-gray-700">
-                  Review Count
-                </label>
-                <input
-                  type="number"
-                  id="reviewCount"
-                  name="reviewCount"
-                  min="0"
-                  value={formData.reviewCount}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0"
-                />
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                    Description *
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    required
+                    rows={3}
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="Enter product description"
+                  />
+                </div>
               </div>
             </div>
 
+            <hr className="border-gray-200" />
+
+            {/* Pricing Section */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Description *
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                required
-                rows={4}
-                value={formData.description}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter product description"
-              />
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+                Pricing
+              </h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                    Price ($) *
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="originalPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                    Original Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    id="originalPrice"
+                    name="originalPrice"
+                    min="0"
+                    step="0.01"
+                    value={formData.originalPrice}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
             </div>
 
+            <hr className="border-gray-200" />
+
+            {/* Product Image Section */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
                 Product Image *
-              </label>
+              </h2>
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="imageFile" className="block text-sm text-gray-600 mb-1">
+                  <label htmlFor="imageFile" className="block text-sm font-medium text-gray-700 mb-2">
                     Upload Image File
                   </label>
                   <input
@@ -345,18 +344,18 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                     id="imageFile"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition"
                   />
                 </div>
 
                 <div className="flex items-center">
                   <div className="flex-grow border-t border-gray-300"></div>
-                  <span className="px-3 text-sm text-gray-500">OR</span>
+                  <span className="px-3 text-sm text-gray-500 font-medium">OR</span>
                   <div className="flex-grow border-t border-gray-300"></div>
                 </div>
 
                 <div>
-                  <label htmlFor="image" className="block text-sm text-gray-600 mb-1">
+                  <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
                     Image URL
                   </label>
                   <input
@@ -366,20 +365,20 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                     value={formData.image}
                     onChange={handleChange}
                     disabled={!!imageFile}
-                    className="block w-full border text-gray-900 border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="https://example.com/image.jpg"
                   />
                   {imageFile && (
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500">
                       Remove the uploaded file to use a URL instead
                     </p>
                   )}
                 </div>
 
                 {imagePreview && (
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-500">Image Preview:</p>
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-gray-700">Image Preview</p>
                       {imageFile && (
                         <button
                           type="button"
@@ -387,19 +386,19 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
                             setImageFile(null);
                             setImagePreview('');
                           }}
-                          className="text-xs text-red-600 hover:text-red-800"
+                          className="text-sm text-red-600 hover:text-red-800 font-medium transition"
                         >
                           Remove
                         </button>
                       )}
                     </div>
-                    <div className="relative h-32 w-32">
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-300">
                       <Image
                         src={imagePreview}
                         alt="Preview"
                         width={128}
                         height={128}
-                        className="h-32 w-32 object-cover rounded-md border"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
@@ -410,48 +409,103 @@ export default function ProductForm({ product, isEditing = false }: ProductFormP
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  name="featured"
-                  checked={formData.featured}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="featured" className="ml-2 block text-sm text-gray-900">
-                  Featured Product
-                </label>
-              </div>
+            <hr className="border-gray-200" />
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="onSale"
-                  name="onSale"
-                  checked={formData.onSale}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="onSale" className="ml-2 block text-sm text-gray-900">
-                  On Sale
-                </label>
+            {/* Reviews & Metadata Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+                Reviews & Metadata
+              </h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="rating" className="block text-sm font-medium text-gray-700 mb-2">
+                    Rating (0-5)
+                  </label>
+                  <input
+                    type="number"
+                    id="rating"
+                    name="rating"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={formData.rating}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="0.0"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="reviewCount" className="block text-sm font-medium text-gray-700 mb-2">
+                    Review Count
+                  </label>
+                  <input
+                    type="number"
+                    id="reviewCount"
+                    name="reviewCount"
+                    min="0"
+                    value={formData.reviewCount}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="0"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-6">
+            <hr className="border-gray-200" />
+
+            {/* Status Section */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+                Status
+              </h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    name="featured"
+                    checked={formData.featured}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="featured" className="ml-3 block text-sm font-medium text-gray-900">
+                    Featured Product
+                  </label>
+                </div>
+
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <input
+                    type="checkbox"
+                    id="onSale"
+                    name="onSale"
+                    checked={formData.onSale}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="onSale" className="ml-3 block text-sm font-medium text-gray-900">
+                    On Sale
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => router.push('/admin/products')}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition"
               >
                 {loading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product')}
               </button>
