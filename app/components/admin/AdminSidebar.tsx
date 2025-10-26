@@ -1,19 +1,17 @@
+// components/admin/AdminSidebar.tsx
 'use client';
 
-import { User } from '@/types/auth';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 interface AdminSidebarProps {
     sidebarOpen: boolean;
     setSidebarOpen: (open: boolean) => void;
-    user: User | null;
 }
 
 export default function AdminSidebar({
     sidebarOpen,
     setSidebarOpen,
-    user
 }: AdminSidebarProps) {
     const pathname = usePathname();
 
@@ -55,6 +53,15 @@ export default function AdminSidebar({
             )
         },
         {
+            name: 'Inventory',
+            href: '/admin/inventory',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4m4 0h-4m4 0H8m12 0H4" />
+                </svg>
+            )
+        },
+        {
             name: 'Users',
             href: '/admin/users',
             icon: (
@@ -85,7 +92,7 @@ export default function AdminSidebar({
             {/* Sidebar */}
             <div className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out 
-        lg:translate-x-0 lg:static lg:inset-0
+        lg:fixed lg:inset-y-0 lg:left-0 lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
                 <div className="flex flex-col h-full">
@@ -104,38 +111,6 @@ export default function AdminSidebar({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
-                    </div>
-
-                    {/* Back to Store */}
-                    <div className="px-4 py-3 border-b border-gray-200">
-                        <Link
-                            href="/"
-                            className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Store
-                        </Link>
-                    </div>
-
-                    {/* User Info */}
-                    <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span className="text-white text-sm font-medium">
-                                    {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'A'}
-                                </span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                    {user?.name || 'Admin User'}
-                                </p>
-                                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                                <p className="text-xs text-blue-600 font-medium mt-1">Administrator</p>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Navigation */}
