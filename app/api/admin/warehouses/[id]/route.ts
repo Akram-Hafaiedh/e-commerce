@@ -2,9 +2,7 @@ import { requireAdmin } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const auth = await requireAdmin();
@@ -12,7 +10,7 @@ export async function GET(
             return auth.error;
         }
 
-        const { id } = params;
+        const { id } = await params;
 
         const warehouse = await prisma.warehouse.findUnique({
             where: { id },
