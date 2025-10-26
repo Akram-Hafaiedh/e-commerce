@@ -16,6 +16,21 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '12');
         const search = searchParams.get('search');
         const category = searchParams.get('category');
+        const simple = searchParams.get('simple'); // Add this line
+
+        // If simple=true, return only basic product info for dropdowns
+        if (simple === 'true') {
+            const products = await prisma.product.findMany({
+                orderBy: { name: 'asc' },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                }
+            });
+
+            return NextResponse.json({ products });
+        }
 
         const skip = (page - 1) * limit;
 
