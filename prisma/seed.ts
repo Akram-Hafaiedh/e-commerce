@@ -480,6 +480,123 @@ async function seedProducts() {
     }
 }
 
+async function seedWarehouses() {
+    try {
+        console.log('Seeding warehouses...');
+
+        const warehousesData = [
+            {
+                name: 'Main Distribution Center',
+                code: 'WH-MAIN-001',
+                address: '123 Distribution Drive',
+                city: 'Chicago',
+                country: 'United States',
+                postalCode: '60601',
+                type: 'MAIN' as const,
+                isActive: true,
+            },
+            {
+                name: 'East Coast Regional',
+                code: 'WH-EAST-001',
+                address: '456 Coastal Avenue',
+                city: 'New York',
+                country: 'United States',
+                postalCode: '10001',
+                type: 'REGIONAL' as const,
+                isActive: true,
+            },
+            {
+                name: 'West Coast Regional',
+                code: 'WH-WEST-001',
+                address: '789 Pacific Boulevard',
+                city: 'Los Angeles',
+                country: 'United States',
+                postalCode: '90001',
+                type: 'REGIONAL' as const,
+                isActive: true,
+            },
+            {
+                name: 'Downtown Store',
+                code: 'WH-STORE-001',
+                address: '321 Main Street',
+                city: 'Chicago',
+                country: 'United States',
+                postalCode: '60602',
+                type: 'STORE' as const,
+                isActive: true,
+            },
+            {
+                name: 'Online Fulfillment Center',
+                code: 'WH-VIRTUAL-001',
+                address: 'Digital Warehouse',
+                city: 'Virtual',
+                country: 'United States',
+                postalCode: '00000',
+                type: 'VIRTUAL' as const,
+                isActive: true,
+            }
+        ];
+
+        const warehousesPromises = warehousesData.map(warehouseData =>
+            prisma.warehouse.upsert({
+                where: { code: warehouseData.code },
+                update: {},
+                create: warehouseData,
+            })
+        );
+
+        const warehouses = await Promise.all(warehousesPromises);
+        console.log('Warehouses created:', warehouses.map(warehouse => warehouse.name).join(', '));
+
+        return warehouses;
+    } catch (error) {
+        console.error('Error seeding warehouses:', error);
+        throw error;
+    }
+}
+
+async function seedInventory() {
+    try {
+        console.log('Seeding inventory...');
+
+        // Get all products and warehouses
+        const products = await prisma.product.findMany();
+        const warehouses = await prisma.warehouse.findMany();
+
+        const mainWarehouse = warehouses.find(w => w.type === 'MAIN');
+
+        if (!mainWarehouse) {
+            console.log('No main warehouse found, skipping inventory seeding');
+            return;
+        }
+
+        const inventoryPromises = products.map(product =>
+            prisma.inventory.upsert({
+                where: {
+                    productId_warehouseId: {
+                        productId: product.id,
+                        warehouseId: mainWarehouse.id,
+                    }
+                },
+                update: {},
+                create: {
+                    productId: product.id,
+                    warehouseId: mainWarehouse.id,
+                    quantity: Math.floor(Math.random() * 50) + 10, // Random stock between 10-60
+                    minStock: 10,
+                    reorderPoint: 20,
+                },
+            })
+        );
+
+        await Promise.all(inventoryPromises);
+        console.log(`Inventory created for ${products.length} products in main warehouse`);
+    } catch (error) {
+        console.error('Error seeding inventory:', error);
+        throw error;
+    }
+}
+
 async function main() {
     console.log('Starting database seeding...')
 
@@ -491,6 +608,12 @@ async function main() {
 
     await seedProducts()
     console.log('✓ Products seeded')
+
+    await seedWarehouses()
+    console.log('✓ Warehouses seeded')
+
+    await seedInventory()
+    console.log('✓ Inventory seeded')
 
     console.log('Database seeding completed successfully!')
 }
