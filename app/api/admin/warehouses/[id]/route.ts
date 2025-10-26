@@ -55,17 +55,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 }
 
-export async function PUT(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await requireAdmin();
         if (auth.error) {
             return auth.error;
         }
 
-        const { id } = params;
+        const { id } = await params;
         const body = await request.json();
         const { name, code, address, city, country, postalCode, type, isActive } = body;
 
@@ -155,17 +152,14 @@ export async function PUT(
     }
 }
 
-export async function DELETE(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await requireAdmin();
         if (auth.error) {
             return auth.error;
         }
 
-        const { id } = params;
+        const { id } = await params;
 
         // Check if warehouse exists
         const warehouse = await prisma.warehouse.findUnique({
