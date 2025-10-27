@@ -15,6 +15,8 @@ interface AnimatedProductSliderProps {
   viewAllText?: string;
   autoPlay?: boolean;
   autoPlayInterval?: number;
+  showBadge?: boolean;
+  badgeText?: string;
 }
 
 export default function AnimatedProductSlider({
@@ -27,7 +29,9 @@ export default function AnimatedProductSlider({
   viewAllLink = '/products',
   viewAllText = 'View All',
   autoPlay = false,
-  autoPlayInterval = 5000
+  autoPlayInterval = 5000,
+  showBadge = false,
+  badgeText = 'Featured'
 }: AnimatedProductSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(4);
@@ -78,18 +82,34 @@ export default function AnimatedProductSlider({
     return null;
   }
 
+  // Determine badge color based on background
+  const getBadgeColor = () => {
+    if (backgroundColor.includes('gradient')) {
+      return 'bg-white/20 backdrop-blur-sm text-white border border-white/30';
+    }
+    return 'bg-blue-100 text-blue-800';
+  };
+
   return (
-    <section className={`py-12 ${backgroundColor} ${textColor}`}>
+    <section className={`py-16 ${backgroundColor} ${textColor}`}>
       <div className="container mx-auto px-4">
         {/* Header */}
         {(title || description || showViewAll) && (
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8">
-            <div className="mb-4 lg:mb-0">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12">
+            <div className="mb-6 lg:mb-0">
+              {showBadge && (
+                <div className={`inline-flex items-center gap-2 ${getBadgeColor()} px-4 py-2 rounded-full mb-4 border ${textColor.includes('white') ? 'border-white/30' : 'border-blue-200'}`}>
+                  <span className="w-2 h-2 bg-current rounded-full opacity-80 animate-pulse"></span>
+                  <span className="text-sm font-medium tracking-wide">{badgeText}</span>
+                </div>
+              )}
               {title && (
-                <h2 className="text-3xl font-bold mb-2">{title}</h2>
+                <h2 className="text-4xl font-bold mb-4 leading-tight">
+                  {title}
+                </h2>
               )}
               {description && (
-                <p className="text-lg opacity-90 max-w-2xl">
+                <p className={`text-lg max-w-2xl leading-relaxed ${textColor.includes('white') ? 'opacity-95' : 'text-gray-700'}`}>
                   {description}
                 </p>
               )}
@@ -98,11 +118,14 @@ export default function AnimatedProductSlider({
             {showViewAll && (
               <a
                 href={viewAllLink}
-                className="inline-flex items-center font-semibold hover:underline transition-colors"
+                className={`group font-semibold transition-all duration-300 inline-flex items-center px-6 py-3 rounded-xl ${textColor.includes('white')
+                  ? 'bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30'
+                  : 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg hover:shadow-xl'
+                  } hover:gap-4`}
               >
                 {viewAllText}
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </a>
             )}
@@ -116,20 +139,26 @@ export default function AnimatedProductSlider({
             <>
               <button
                 onClick={prevSlide}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white text-gray-800 w-10 h-10 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:bg-gray-50"
+                className={`absolute left-0 top-1/2 transform -translate-y-1/2 z-10 ${textColor.includes('white')
+                  ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30'
+                  : 'bg-white text-gray-800 shadow-lg hover:bg-gray-50'
+                  } w-12 h-12 rounded-full transition-all duration-300 flex items-center justify-center`}
                 aria-label="Previous slide"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
 
               <button
                 onClick={nextSlide}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white text-gray-800 w-10 h-10 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:bg-gray-50"
+                className={`absolute right-0 top-1/2 transform -translate-y-1/2 z-10 ${textColor.includes('white')
+                  ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30'
+                  : 'bg-white text-gray-800 shadow-lg hover:bg-gray-50'
+                  } w-12 h-12 rounded-full transition-all duration-300 flex items-center justify-center`}
                 aria-label="Next slide"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -137,7 +166,6 @@ export default function AnimatedProductSlider({
           )}
 
           {/* Sliding Products */}
-
           <div className="overflow-hidden">
             <div
               className="flex transition-transform duration-500 ease-in-out"
@@ -170,8 +198,13 @@ export default function AnimatedProductSlider({
                   key={index}
                   onClick={() => goToSlide(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex
-                    ? `${textColor.includes('white') ? 'bg-white' : 'bg-gray-900'} scale-125`
-                    : 'bg-gray-300 hover:bg-gray-400'
+                    ? `${textColor.includes('white')
+                      ? 'bg-white'
+                      : 'bg-blue-600'
+                    } scale-125`
+                    : textColor.includes('white')
+                      ? 'bg-white/40 hover:bg-white/60'
+                      : 'bg-gray-300 hover:bg-gray-400'
                     }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
