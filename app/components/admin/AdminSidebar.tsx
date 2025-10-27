@@ -48,7 +48,7 @@ export default function AdminSidebar({
             href: '/admin/warehouses',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
             )
         },
@@ -67,6 +67,15 @@ export default function AdminSidebar({
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Newsletter',
+            href: '/admin/newsletter',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             )
         },
@@ -135,6 +144,13 @@ export default function AdminSidebar({
                             </Link>
                         ))}
                     </nav>
+
+                    {/* Footer Info */}
+                    <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+                        <p className="text-xs text-gray-500">
+                            Press <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-medium">Cmd+K</kbd> for quick navigation
+                        </p>
+                    </div>
                 </div>
             </div>
         </>
