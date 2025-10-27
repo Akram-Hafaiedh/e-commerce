@@ -64,7 +64,7 @@ model Category {
   parentId String? // Optional self-relation for subcategories
   parent   Category?  @relation("CategoryToSubcategories", fields: [parentId], references: [id])
   children Category[] @relation("CategoryToSubcategories")
-  products  Product[]
+  products Product[]
 
   @@map("categories")
 }
@@ -192,6 +192,30 @@ model StockMovement {
   warehouse Warehouse @relation(fields: [warehouseId], references: [id])
 
   @@map("stock_movements")
+}
+
+model Subscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  isActive       Boolean   @default(true)
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([isActive])
+  @@index([subscribedAt])
+}
+
+model Campaign {
+  id             String   @id @default(cuid())
+  title          String
+  message        String   @db.Text
+  recipientCount Int
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([sentAt])
 }
 
 enum MovementType {
