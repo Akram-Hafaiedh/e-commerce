@@ -1,15 +1,15 @@
 import { Order } from "./order";
-import { Product } from "./product";
+import { ProductWithStock } from "./product";
 
 export interface CartItem {
-    product: Product;
+    product: ProductWithStock;
     quantity: number;
 }
 
 
 export interface CartContextType {
     items: CartItem[];
-    addToCart: (product: Product, quantity?: number) => void;
+    addToCart: (product: ProductWithStock, quantity?: number) => void;
     removeFromCart: (productId: string) => void;
     updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;

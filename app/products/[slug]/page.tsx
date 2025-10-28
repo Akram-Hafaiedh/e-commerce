@@ -12,7 +12,7 @@ interface ProductPageProps {
 
 
 async function getProduct(slug: string): Promise<ProductWithStock | null> {
-    console.log('[SERVER] Starting getProduct for slug:', slug);
+    // console.log('[SERVER] Starting getProduct for slug:', slug);
     try {
         const product = await prisma.product.findUnique({
             where: { slug },
@@ -27,7 +27,7 @@ async function getProduct(slug: string): Promise<ProductWithStock | null> {
         });
 
         if (product) {
-            console.log('[SERVER] Product found:', product.id, product.name);
+            // console.log('[SERVER] Product found:', product.id, product.name);
             const totalStock = product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0);
 
             // Return product with calculated stock
@@ -36,7 +36,7 @@ async function getProduct(slug: string): Promise<ProductWithStock | null> {
                 stock: totalStock
             };
         } else {
-            console.log('[SERVER] No product found for slug:', slug);
+            // console.log('[SERVER] No product found for slug:', slug);
             return null;
         }
 
@@ -52,15 +52,15 @@ async function getProduct(slug: string): Promise<ProductWithStock | null> {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-    console.log('[SERVER] ProductPage rendering for params:', params);
+    // console.log('[SERVER] ProductPage rendering for params:', params);
     const product = await getProduct(params.slug);
 
-    console.log('[SERVER] Product result:', product ? 'Found' : 'Not found');
+    // console.log('[SERVER] Product result:', product ? 'Found' : 'Not found');
     if (!product) {
-        console.log('[SERVER] Calling notFound()');
+        // console.log('[SERVER] Calling notFound()');
         notFound();
     }
-    console.log('[SERVER] Rendering ProductContent component');
+    // console.log('[SERVER] Rendering ProductContent component');
     return <ProductContent product={product} category={product.category} />;
 }
 

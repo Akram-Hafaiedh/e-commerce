@@ -21,16 +21,16 @@ export default function ProductContent({ product, category }: ProductContentProp
 
     // Fetch related products
     useEffect(() => {
-        console.log('[CLIENT] ProductContent mounted, product:', product.id);
+        // console.log('[CLIENT] ProductContent mounted, product:', product.id);
         async function fetchRelatedProducts() {
             try {
-                console.log('[CLIENT] Fetching related products for category:', product.category.id);
+                // console.log('[CLIENT] Fetching related products for category:', product.category.id);
                 setLoadingRelated(true);
                 const res = await fetch(`/api/products?category=${product.category.id}&all=true`);
-                console.log('[CLIENT] Related products response status:', res.status);
+                // console.log('[CLIENT] Related products response status:', res.status);
                 if (res.ok) {
                     const data = await res.json();
-                    console.log('[CLIENT] Related products count:', data.length);
+                    // console.log('[CLIENT] Related products count:', data.length);
                     // Filter out current product and limit to 4
                     const filtered = data
                         .filter((p: Product) => p.id !== product.id)

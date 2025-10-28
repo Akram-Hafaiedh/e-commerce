@@ -9,18 +9,32 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addToCart } = useCart();
+  const { addToCart, items } = useCart();
   const [imageError, setImageError] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1);
+
+    if (product.stock === 0) return;
+
+    setIsAdding(true);
+    try {
+      addToCart(product, 1);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const discountPercentage = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+
+  // Get current quantity in cart
+  const currentInCart = items.find(item => item.product.id === product.id)?.quantity || 0;
+  // FIX: Check if we can add ONE more item (not if total is less than stock)
+  const canAddMore = currentInCart < product.stock;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 hover:translate-y-[-4px]">
@@ -65,10 +79,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute bottom-3 right-3 z-10">
           <span
             className={`text-xs font-medium px-2 py-1 rounded-full shadow-md ${product.stock > 10
-                ? 'bg-green-100 text-green-800'
-                : product.stock > 0
-                  ? 'bg-orange-100 text-orange-800'
-                  : 'bg-red-100 text-red-800'
+              ? 'bg-green-100 text-green-800'
+              : product.stock > 0
+                ? 'bg-orange-100 text-orange-800'
+                : 'bg-red-100 text-red-800'
               }`}
           >
             {product.stock > 10
@@ -78,6 +92,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                 : 'Out of Stock'}
           </span>
         </div>
+
+        {/* In Cart Badge */}
+        {currentInCart > 0 && (
+          <div className="absolute bottom-3 left-3 z-10">
+            <span className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-md">
+              {currentInCart} in cart
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Product Info */}
@@ -116,10 +139,21 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between">
           <button
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm font-medium shadow-sm hover:shadow-md"
+            disabled={product.stock === 0 || !canAddMore || isAdding}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm font-medium shadow-sm hover:shadow-md flex items-center space-x-2"
           >
-            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            {isAdding ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Adding...</span>
+              </>
+            ) : product.stock === 0 ? (
+              'Out of Stock'
+            ) : !canAddMore ? (
+              'Max in Cart'
+            ) : (
+              'Add to Cart'
+            )}
           </button>
           <Link
             href={`/products/${product.slug}`}

@@ -1,36 +1,65 @@
 'use client';
 
 import { useCart } from "../context/CartContext";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CartDropdownProps, CartItem } from "@/types/cart";
 
 export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
-
-    const { items, getTotalPrice, getTotalItems, removeFromCart } = useCart();
+    const { items, getTotalPrice, getTotalItems, removeFromCart, updateQuantity } = useCart();
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
 
-     // Close dropdown when clicking outside
+    const handleClose = useCallback(() => {
+        setIsAnimating(false);
+        setTimeout(() => {
+            onClose();
+        }, 200);
+    }, [onClose]);
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                onClose();
+                handleClose();
             }
         }
-        if(isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
+
+        function handleEscapeKey(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                handleClose();
+            }
         }
+
+        if (isOpen) {
+            setIsAnimating(true);
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleEscapeKey);
+        }
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscapeKey);
         };
-        
-    }, [isOpen, onClose])
+    }, [isOpen, handleClose]);
 
 
-    if (!isOpen) return null;
+
+    const handleQuantityChange = (item: CartItem, newQuantity: number) => {
+        if (newQuantity <= 0) {
+            removeFromCart(item.product.id);
+        } else {
+            updateQuantity(item.product.id, newQuantity);
+        }
+    };
+
+    if (!isOpen && !isAnimating) return null;
 
     return (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+        <div
+            ref={dropdownRef}
+            className={`absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 transition-all duration-200 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+                }`}
+        >
             <div className="p-4">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4">
@@ -38,8 +67,9 @@ export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                         Shopping Cart ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'})
                     </h3>
                     <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
+                        onClick={handleClose}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="Close cart"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -52,6 +82,12 @@ export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                     <div className="text-center py-8">
                         <div className="text-4xl mb-2">🛒</div>
                         <p className="text-gray-500">Your cart is empty</p>
+                        <button
+                            onClick={handleClose}
+                            className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                            Continue Shopping
+                        </button>
                     </div>
                 ) : (
                     <>
@@ -69,21 +105,37 @@ export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                                             {item.product.name}
                                         </h4>
                                         <p className="text-gray-600 text-sm">
-                                            ${item.product.price} × {item.quantity}
+                                            ${item.product.price}
                                         </p>
                                     </div>
 
-                                    {/* Total Price */}
-                                    <div className="text-right">
-                                        <p className="font-semibold text-gray-900 text-sm">
-                                            ${(item.product.price * item.quantity).toFixed(2)}
-                                        </p>
+                                    {/* Quantity Controls */}
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                                            className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                                            aria-label="Decrease quantity"
+                                        >
+                                            -
+                                        </button>
+                                        <span className="text-sm font-medium w-6 text-center">
+                                            {item.quantity}
+                                        </span>
+                                        <button
+                                            onClick={() => handleQuantityChange(item, item.quantity + 1)}
+                                            disabled={item.quantity >= item.product.stock}
+                                            className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label="Increase quantity"
+                                        >
+                                            +
+                                        </button>
                                     </div>
 
                                     {/* Remove Button */}
                                     <button
                                         onClick={() => removeFromCart(item.product.id)}
                                         className="text-red-400 hover:text-red-600 transition-colors p-1"
+                                        aria-label="Remove item"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -107,14 +159,14 @@ export default function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                         <div className="space-y-2">
                             <Link
                                 href="/cart"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                             >
                                 View Cart
                             </Link>
                             <Link
                                 href="/checkout"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
                             >
                                 Checkout
