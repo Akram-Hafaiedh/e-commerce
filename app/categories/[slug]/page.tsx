@@ -1,176 +1,277 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Category } from '@/types/category';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
+import ProductCard from '@/app/components/ProductCard';
+import Pagination from '@/app/components/parts/Pagination';
+import { CategoryWithCount } from '@/types/category';
+import { ProductWithStock } from '@/types/product';
 
-export default function CategoryPage() {
-    const params = useParams<{ slug: string }>();
+export default function SingleCategoryPage() {
+    const params = useParams();
     const slug = params.slug as string;
 
-    // State for data
-    const [category, setCategory] = useState<Category | null>(null);
-    const [subcategories, setSubcategories] = useState<Category[]>([]);
+    const [category, setCategory] = useState<CategoryWithCount | null>(null);
+    const [subcategories, setSubcategories] = useState<CategoryWithCount[]>([]);
+    const [products, setProducts] = useState<ProductWithStock[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [sortBy, setSortBy] = useState<'name' | 'price' | 'rating' | 'newest'>('name');
+    const [currentPage, setCurrentPage] = useState(1);
+    const productsPerPage = 12;
 
-    // Fetch data on mount
     useEffect(() => {
-        async function fetchData() {
+        const fetchCategoryData = async () => {
             try {
                 setLoading(true);
-                setError(false);
-                
-                // Fetch category by slug
-                const categoryRes = await fetch(`/api/categories/${slug}`);
-                if (!categoryRes.ok) {
-                    setError(true);
-                    setLoading(false);
-                    return;
-                }
-                const categoryData = await categoryRes.json();
-                
-                if (!categoryData || categoryData.error) {
-                    setError(true);
-                    setLoading(false);
-                    return;
-                }
-                
-                setCategory(categoryData);
-                
-                // Fetch subcategories for this category
-                const subcategoriesRes = await fetch(`/api/categories?parent=${slug}`);
-                if (subcategoriesRes.ok) {
-                    const subcategoriesData = await subcategoriesRes.json();
-                    setSubcategories(subcategoriesData.categories || subcategoriesData || []);
-                }
 
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                setError(true);
+                // Fetch category details, subcategories, and products
+                const [categoryRes, subcategoriesRes, productsRes] = await Promise.all([
+                    fetch(`/api/categories?slug=${slug}`),
+                    fetch(`/api/categories?parent=${slug}`),
+                    fetch(`/api/products?category=${slug}&limit=100`)
+                ]);
+
+                const categoryData = await categoryRes.json();
+                const subcategoriesData = await subcategoriesRes.json();
+                const productsData = await productsRes.json();
+
+                setCategory(categoryData.category || categoryData);
+                setSubcategories(subcategoriesData.categories || subcategoriesData);
+                setProducts(productsData.products || productsData);
+            } catch (error) {
+                console.error('Error fetching category data:', error);
             } finally {
                 setLoading(false);
             }
-        }
+        };
 
         if (slug) {
-            fetchData();
+            fetchCategoryData();
         }
     }, [slug]);
 
-    // Loading state
+    // Sort products
+    const sortedProducts = useMemo(() => {
+        const sorted = [...products];
+        switch (sortBy) {
+            case 'price':
+                return sorted.sort((a, b) => a.price - b.price);
+            case 'rating':
+                return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            case 'newest':
+                return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            case 'name':
+            default:
+                return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        }
+    }, [products, sortBy]);
+
+    // Pagination
+    const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * productsPerPage;
+        return sortedProducts.slice(startIndex, startIndex + productsPerPage);
+    }, [sortedProducts, currentPage]);
+
     if (loading) {
+        return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
+    }
+
+    if (!category) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading category...</p>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
+                    <Link href="/categories" className="text-blue-600 hover:text-blue-700">
+                        Back to Categories
+                    </Link>
                 </div>
             </div>
         );
     }
 
-    // Error or not found
-    if (error || !category) {
-        notFound();
-    }
-
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Breadcrumb */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="container mx-auto px-4 py-4">
-                    <nav className="flex text-sm text-gray-600">
-                        <Link href="/" className="hover:text-blue-600 transition-colors">
-                            Home
-                        </Link>
-                        <span className="mx-2">/</span>
-                        <Link href="/categories" className="hover:text-blue-600 transition-colors">
-                            Categories
-                        </Link>
-                        <span className="mx-2">/</span>
-                        <span className="text-gray-900 font-medium">{category.name}</span>
-                    </nav>
-                </div>
-            </div>
-
-            <div className="container mx-auto px-4 py-8">
-                {/* Header Section */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{category.name}</h1>
-                    <p className="text-gray-600 max-w-2xl mx-auto">
-                        {category.description || `Explore our ${category.name} collection`}
-                    </p>
+            {/* Category Hero */}
+            <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden">
+                {/* Animated Background Elements */}
+                <div className="absolute inset-0">
+                    <div className="absolute top-0 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                    <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                    <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
                 </div>
 
-                {/* Subcategories Grid or Direct Products Link */}
-                {subcategories.length > 0 ? (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="relative container mx-auto px-4 py-12 z-10">
+                    <div className="flex flex-col lg:flex-row items-center gap-8">
+                        {/* Category Image */}
+                        <div className="lg:w-1/3">
+                            <div className="w-64 h-64 mx-auto bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl flex items-center justify-center shadow-2xl">
+                                {category.image ? (
+                                    <Image
+                                        src={category.image}
+                                        alt={category.name}
+                                        width={200}
+                                        height={200}
+                                        className="object-cover rounded-2xl"
+                                    />
+                                ) : (
+                                    <span className="text-6xl">🛍️</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Category Info */}
+                        <div className="lg:w-2/3 text-center lg:text-left">
+                            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                                {category.name}
+                            </h1>
+                            <p className="text-white/90 text-lg mb-6 max-w-2xl">
+                                {category.description || `Explore our collection of ${category.name.toLowerCase()} products.`}
+                            </p>
+
+                            <div className="flex flex-wrap gap-6 justify-center lg:justify-start">
+                                <div className="text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-6 py-3">
+                                    <div className="text-2xl font-bold text-yellow-400">{category._count?.products || 0}</div>
+                                    <div className="text-white/80 text-sm">Products</div>
+                                </div>
+                                {(category._count?.children || 0) > 0 && (
+                                    <div className="text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-6 py-3">
+                                        <div className="text-2xl font-bold text-yellow-400">{category._count?.children || 0}</div>
+                                        <div className="text-white/80 text-sm">Subcategories</div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Subcategories */}
+            {subcategories.length > 0 && (
+                <section className="py-12 bg-white">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-8">Subcategories</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                             {subcategories.map((subcategory) => (
                                 <Link
                                     key={subcategory.id}
                                     href={`/categories/${subcategory.slug}`}
                                     className="group block"
                                 >
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:translate-y-[-4px]">
-                                        <div className="h-48 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
+                                    <div className="bg-gray-50 rounded-xl p-4 text-center hover:bg-blue-50 hover:border-blue-200 border-2 border-transparent transition-all duration-300">
+                                        <div className="w-12 h-12 mx-auto bg-white rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                                             {subcategory.image ? (
                                                 <Image
                                                     src={subcategory.image}
                                                     alt={subcategory.name}
-                                                    fill
-                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    width={24}
+                                                    height={24}
+                                                    className="object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-                                                    <span className="text-2xl">🛍️</span>
-                                                </div>
+                                                <span className="text-xl">📁</span>
                                             )}
                                         </div>
-
-                                        <div className="p-6 text-center">
-                                            <h2 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                                                {subcategory.name}
-                                            </h2>
-                                            <p className="text-gray-600 leading-relaxed">
-                                                {subcategory.description}
-                                            </p>
-                                            <div className="mt-4 text-blue-600 font-medium group-hover:underline">
-                                                Explore {subcategory.name} →
-                                            </div>
-                                        </div>
+                                        <h3 className="font-semibold text-gray-900 text-sm group-hover:text-blue-600">
+                                            {subcategory.name}
+                                        </h3>
+                                        <p className="text-gray-500 text-xs mt-1">
+                                            {subcategory._count?.products || 0} products
+                                        </p>
                                     </div>
                                 </Link>
                             ))}
                         </div>
-                    </>
-                ) : (
-                    // If no subcategories, show direct link to products
-                    <div className="text-center py-12">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 max-w-2xl mx-auto">
-                            <div className="text-6xl mb-4">📦</div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                                Browse {category.name} Products
-                            </h2>
-                            <p className="text-gray-600 mb-8">
-                                Explore our complete collection of {category.name.toLowerCase()} products with advanced filtering and search.
+                    </div>
+                </section>
+            )}
+
+            {/* Products Section */}
+            <section className="py-12">
+                <div className="container mx-auto px-4">
+                    {/* Products Header */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900">Products</h2>
+                            <p className="text-gray-600">
+                                {products.length} products found in {category.name}
                             </p>
-                            <Link
-                                href={`/products?categories=${category.slug}`}
-                                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        </div>
+
+                        {/* Sort Options */}
+                        <div className="flex items-center gap-4">
+                            <label className="text-sm text-gray-900">Sort by:</label>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'rating' | 'newest')}
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                             >
-                                View All Products
-                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </Link>
+                                <option value="name">Name</option>
+                                <option value="price">Price</option>
+                                <option value="rating">Rating</option>
+                                <option value="newest">Newest</option>
+                            </select>
                         </div>
                     </div>
-                )}
-            </div>
+
+                    {/* Products Grid */}
+                    {paginatedProducts.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                                {paginatedProducts.map((product) => (
+                                    <ProductCard key={product.id} product={product} />
+                                ))}
+                            </div>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                    totalItems={products.length}
+                                    itemsPerPage={productsPerPage}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-2xl">😞</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No products found</h3>
+                            <p className="text-gray-600 mb-6">There are no products in this category yet.</p>
+                            <Link
+                                href="/categories"
+                                className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                Browse Other Categories
+                            </Link>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Related Categories */}
+            <section className="py-12 bg-white border-t">
+                <div className="container mx-auto px-4">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Categories</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {/* You could fetch sibling categories or popular categories here */}
+                        <Link
+                            href="/categories"
+                            className="bg-gray-50 rounded-xl p-4 text-center hover:bg-blue-50 transition-colors"
+                        >
+                            <div className="w-12 h-12 mx-auto bg-white rounded-lg flex items-center justify-center mb-2">
+                                <span className="text-xl">🔍</span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">All Categories</span>
+                        </Link>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }

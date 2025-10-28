@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
+        const slug = searchParams.get('slug');
         const all = searchParams.get('all');
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '12');
@@ -12,6 +13,41 @@ export async function GET(request: NextRequest) {
         const flatten = searchParams.get('flatten');
         const parent = searchParams.get('parent');
         const featured = searchParams.get('featured');
+
+        if (slug) {
+            const category = await prisma.category.findUnique({
+                where: { slug },
+                include: {
+                    parent: true,
+                    children: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            description: true,
+                            image: true,
+                            featured: true,
+                        },
+                    },
+                    _count: {
+                        select: {
+                            products: true,
+                            children: true,
+                        },
+                    },
+                },
+            });
+
+            if (!category) {
+                return NextResponse.json(
+                    { error: 'Category not found' },
+                    { status: 404 }
+                );
+            }
+
+            return NextResponse.json({ category });
+        }
+
 
         const skip = (page - 1) * limit;
 

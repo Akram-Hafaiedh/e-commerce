@@ -11,3 +11,10 @@ export interface Category {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface CategoryWithCount extends Category {
+    _count?: {
+        products: number;
+        children: number;
+    };
+}

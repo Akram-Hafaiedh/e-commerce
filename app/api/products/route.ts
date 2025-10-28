@@ -5,27 +5,83 @@ import { Prisma } from '@prisma/client';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const slug = searchParams.get('slug');
     const all = searchParams.get('all');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
-    const categories = searchParams.get('categories');
+    const category = searchParams.get('category');
     const featured = searchParams.get('featured');
     const onSale = searchParams.get('onSale');
     const search = searchParams.get('search');
+
+    // Handle single product fetch by slug
+    if (slug) {
+      const product = await prisma.product.findUnique({
+        where: { slug },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          originalPrice: true,
+          image: true,
+          slug: true,
+          featured: true,
+          onSale: true,
+          rating: true,
+          reviewCount: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              image: true
+            }
+          },
+          Inventory: {
+            select: {
+              id: true,
+              quantity: true,
+              warehouseId: true,
+              warehouse: {
+                select: {
+                  name: true,
+                  code: true,
+                  city: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!product) {
+        return NextResponse.json(
+          { error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+
+      // Compute total stock
+      const productWithStock = {
+        ...product,
+        stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
+        Inventory: undefined // Remove if not needed in response
+      };
+
+      return NextResponse.json({ product: productWithStock });
+    }
+
     const skip = (page - 1) * limit;
 
-
     // Build where clause with proper Prisma type
-    const where: Prisma.ProductWhereInput = {
-      // Inventory: {
-      //   some: {
-      //     quantity: { gt: 0 } // Only products with total stock > 0
-      //   }
-      // }
-    };
+    const where: Prisma.ProductWhereInput = {};
 
-    if (categories) {
-      const categorySlugs = categories.split(',');
+    if (category) {
+      const categorySlugs = category.split(',');
       where.category = {
         slug: { in: categorySlugs }
       };
@@ -62,6 +118,7 @@ export async function GET(request: NextRequest) {
           rating: true,
           reviewCount: true,
           createdAt: true,
+          updatedAt: true,
           category: {
             select: {
               id: true,
@@ -111,6 +168,7 @@ export async function GET(request: NextRequest) {
           rating: true,
           reviewCount: true,
           createdAt: true,
+          updatedAt: true,
           category: {
             select: {
               id: true,
