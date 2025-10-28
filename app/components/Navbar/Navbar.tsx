@@ -59,7 +59,7 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2">
                         {/* <div className="w-8 h-8 bg-blue-600 rounded-full"></div> */}
-                        <Image src="/web-app-manifest-512x512.png" alt="Logo" width={50} height={50} />
+                        <Image src="/logo.svg" className="h-8 w-8 object-contain" alt="Logo" width={40} height={40} />
                         <span className="text-xl font-bold text-gray-900">ShopStore</span>
                     </Link>
 
