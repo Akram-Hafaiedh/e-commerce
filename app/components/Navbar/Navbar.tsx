@@ -9,6 +9,7 @@ import CartDropdown from '../CartDropdown';
 import { useAuth } from '../../hooks/useAuth';
 import UserDropdown from '../UserDropdown';
 import AuthDropdown from '../AuthDropdown';
+import Image from 'next/image';
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -57,9 +58,12 @@ export default function Navbar() {
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-full"></div>
+                        {/* <div className="w-8 h-8 bg-blue-600 rounded-full"></div> */}
+                        <Image src="/web-app-manifest-512x512.png" alt="Logo" width={50} height={50} />
                         <span className="text-xl font-bold text-gray-900">ShopStore</span>
                     </Link>
+
+
 
                     {/* Navigation Links */}
                     <div className="hidden md:flex items-center space-x-8">
