@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured');
     const onSale = searchParams.get('onSale');
     const search = searchParams.get('search');
-
     const skip = (page - 1) * limit;
+
 
     // Build where clause with proper Prisma type
     const where: Prisma.ProductWhereInput = {
@@ -49,7 +49,19 @@ export async function GET(request: NextRequest) {
     if (all === 'true') {
       const allProducts = await prisma.product.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          originalPrice: true,
+          image: true,
+          slug: true,
+          featured: true,
+          onSale: true,
+          rating: true,
+          reviewCount: true,
+          createdAt: true,
           category: {
             select: {
               id: true,
@@ -57,9 +69,14 @@ export async function GET(request: NextRequest) {
               slug: true
             }
           },
+          _count: {
+            select: {
+              Inventory: true
+            }
+          },
           Inventory: {
             select: {
-              quantity: true // Only fetch what we need for summing stock
+              quantity: true
             }
           }
         },
@@ -81,7 +98,19 @@ export async function GET(request: NextRequest) {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          originalPrice: true,
+          image: true,
+          slug: true,
+          featured: true,
+          onSale: true,
+          rating: true,
+          reviewCount: true,
+          createdAt: true,
           category: {
             select: {
               id: true,
@@ -91,7 +120,7 @@ export async function GET(request: NextRequest) {
           },
           Inventory: {
             select: {
-              quantity: true // Only fetch what we need for summing stock
+              quantity: true
             }
           }
         },

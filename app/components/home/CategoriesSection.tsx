@@ -10,71 +10,54 @@ export default function CategoriesSection({ categories }: { categories: Category
     return (
         <>
             {featuredCategories.length > 0 && (
-                <section className="py-20 bg-gradient-to-b from-white to-gray-50/50">
+                <section className="py-12 bg-white">
                     <div className="container mx-auto px-4">
-                        <div className="text-center mb-16">
-                            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full mb-4">
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full mb-3">
                                 <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
                                 <span className="text-sm font-medium">Browse Collections</span>
                             </div>
-                            <h2 className="text-5xl font-bold text-gray-900 mb-6">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-3">
                                 Shop by <span className="text-blue-600">Category</span>
                             </h2>
-                            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                            <p className="text-base text-gray-600 max-w-2xl mx-auto">
                                 Discover our carefully curated categories filled with products that match your style and needs
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {featuredCategories.map((category, index) => (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            {featuredCategories.map((category) => (
                                 <Link
                                     key={category.id}
                                     href={`/categories/${category.slug}`}
                                     className="group block"
                                 >
-                                    <div
-                                        className="relative bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:translate-y-[-8px]"
-                                        style={{
-                                            animationDelay: `${index * 100}ms`,
-                                            animation: 'fadeInUp 0.6s ease-out forwards'
-                                        }}
-                                    >
-                                        {/* Gradient Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-
-                                        <div className="h-56 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
+                                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:translate-y-[-2px]">
+                                        <div className="h-32 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
                                             {category.image ? (
                                                 <Image
                                                     src={category.image}
                                                     alt={category.name}
                                                     fill
-                                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                                                    priority={false}
+                                                    loading="lazy"
+                                                    placeholder="blur"
+                                                    blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
                                                 />
                                             ) : (
-                                                <div className="relative z-20">
-                                                    <div className="w-20 h-20 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                                        <span className="text-3xl">🛍️</span>
-                                                    </div>
+                                                <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                                                    <span className="text-2xl">🛍️</span>
                                                 </div>
                                             )}
-
-                                            {/* Hover Effect */}
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
                                         </div>
 
-                                        <div className="p-6 text-center relative z-20">
-                                            <h2 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                                        <div className="p-3 text-center">
+                                            <h3 className="text-sm font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors truncate">
                                                 {category.name}
-                                            </h2>
-                                            <p className="text-gray-600 leading-relaxed mb-4">
-                                                {category.description}
-                                            </p>
-                                            <div className="inline-flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-3 transition-all duration-300">
-                                                <span>Explore Now</span>
-                                                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                                </svg>
-                                            </div>
+                                            </h3>
                                         </div>
                                     </div>
                                 </Link>
@@ -82,19 +65,20 @@ export default function CategoriesSection({ categories }: { categories: Category
                         </div>
 
                         {/* View All Categories Button */}
-                        <div className="text-center mt-12">
+                        <div className="text-center mt-8">
                             <Link
                                 href="/categories"
-                                className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-xl hover:bg-gray-800 transition-all duration-300 font-semibold hover:gap-4 hover:shadow-xl"
+                                className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 font-semibold hover:gap-3"
                             >
                                 <span>View All Categories</span>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
                             </Link>
                         </div>
                     </div>
                 </section>
-            )}</>
+            )}
+        </>
     )
 }

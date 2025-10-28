@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '12');
 
+        const flatten = searchParams.get('flatten');
         const parent = searchParams.get('parent');
         const featured = searchParams.get('featured');
 
@@ -34,8 +35,14 @@ export async function GET(request: NextRequest) {
             where.featured = true;
         }
         if (all === 'true') {
+            const whereForAll: Prisma.CategoryWhereInput = {};
+
+            if (featured === 'true') {
+                whereForAll.featured = true;
+            }
+
             const categories = await prisma.category.findMany({
-                where,
+                where: whereForAll,
                 include: {
                     children: {
                         select: {
@@ -58,6 +65,28 @@ export async function GET(request: NextRequest) {
                     name: 'asc'
                 }
             });
+
+            // Only flatten if explicitly requested
+            if (flatten === 'true') {
+                const flattenedCategories = categories.flatMap(category => [
+                    {
+                        ...category,
+                        isParent: true,
+                        children: undefined // Remove children from flattened items
+                    },
+                    ...category.children.map(child => ({
+                        ...child,
+                        isParent: false,
+                        parentName: category.name,
+                        parentSlug: category.slug,
+                        _count: { products: 0, children: 0 } // Add empty _count for consistency
+                    }))
+                ]);
+
+                return NextResponse.json({
+                    categories: flattenedCategories
+                });
+            }
 
             return NextResponse.json({
                 categories

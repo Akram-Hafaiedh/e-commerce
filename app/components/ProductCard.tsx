@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -33,7 +35,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   // Get current quantity in cart
   const currentInCart = items.find(item => item.product.id === product.id)?.quantity || 0;
-  // FIX: Check if we can add ONE more item (not if total is less than stock)
   const canAddMore = currentInCart < product.stock;
 
   return (
