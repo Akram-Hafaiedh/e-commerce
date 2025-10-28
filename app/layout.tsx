@@ -11,6 +11,9 @@ import LayoutContent from './components/Navbar/LayoutContent';
 export const metadata: Metadata = {
   title: 'Ecommerce Store',
   description: 'A modern ecommerce store built with Next.js',
+  appleWebApp: {
+    title: 'ShopStore',
+  },
 };
 
 export default function RootLayout({
