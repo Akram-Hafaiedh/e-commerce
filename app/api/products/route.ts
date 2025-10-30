@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get('all');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
-    const category = searchParams.get('category');
+    const categories = searchParams.get('categories');
     const featured = searchParams.get('featured');
     const onSale = searchParams.get('onSale');
     const search = searchParams.get('search');
@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
     // Build where clause with proper Prisma type
     const where: Prisma.ProductWhereInput = {};
 
-    if (category) {
-      const categorySlugs = category.split(',');
+    if (categories) {
+      const categorySlugs = categories.split(',');
       where.category = {
         slug: { in: categorySlugs }
       };
