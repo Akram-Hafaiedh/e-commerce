@@ -6,7 +6,7 @@ import { CartProvider } from './context/CartContext';
 import { Analytics } from "@vercel/analytics/next"
 import { ToastProvider } from './context/ToastContext';
 import { Providers } from './providers/providers';
-import LayoutContent from './components/Navbar/LayoutContent';
+import LayoutContent from './components/layout/LayoutContent';
 
 export const metadata: Metadata = {
   title: 'Ecommerce Store',

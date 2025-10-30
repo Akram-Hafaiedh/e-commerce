@@ -1,8 +1,8 @@
-// Client component to conditionally show navbar
 'use client';
 
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
+import Footer from './Footer';
 
 export default function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -14,6 +14,7 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
             <main className={isAdminRoute ? 'admin-layout' : ''}>
                 {children}
             </main>
+            {!isAdminRoute && <Footer />}
         </>
     );
 }
