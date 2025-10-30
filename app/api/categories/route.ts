@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
         const all = searchParams.get('all');
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '12');
+        const search = searchParams.get('search');
 
         const flatten = searchParams.get('flatten');
         const parent = searchParams.get('parent');
@@ -52,6 +53,13 @@ export async function GET(request: NextRequest) {
         const skip = (page - 1) * limit;
 
         const where: Prisma.CategoryWhereInput = {};
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } }
+            ];
+        }
 
         if (parent) {
             const parentCategory = await prisma.category.findUnique({
