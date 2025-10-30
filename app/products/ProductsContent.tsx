@@ -19,7 +19,7 @@ interface ProductsResponse {
     hasPrev: boolean;
 }
 
-export default function EnhancedProductsPage() {
+export default function ProductsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
