@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/parts/Pagination';
 import { ProductWithStock } from '@/types/product';
@@ -9,151 +9,78 @@ import { Category } from '@/types/category';
 
 const ITEMS_PER_PAGE = 12;
 
-
-interface ProductsResponse {
-    products: ProductWithStock[];
-    total: number;
-    page: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+interface Props {
+    initialProducts: ProductWithStock[];
+    initialTotal: number;
+    initialPage: number;
+    initialTotalPages: number;
+    categories: Category[];
+    searchParams: {
+        page?: string;
+        search?: string;
+        categories?: string;
+        featured?: string;
+        onSale?: string;
+    };
 }
 
-export default function ProductsContent() {
-    const searchParams = useSearchParams();
+export default function ProductsClient({
+    initialProducts,
+    initialTotal,
+    initialPage,
+    initialTotalPages,
+    categories,
+    searchParams: initialSearchParams
+}: Props) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const [isPending, startTransition] = useTransition();
 
-    const [products, setProducts] = useState<ProductWithStock[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [productsLoading, setProductsLoading] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalProducts, setTotalProducts] = useState(0);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('newest');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    // State initialized from server data
+    const currentPage = Math.max(1, Number(searchParams.get('page') ?? initialPage));
+    const totalPages = initialTotalPages;
+    const totalProducts = initialTotal;
+
+    // Client-side filter state
+    const [searchTerm, setSearchTerm] = useState(initialSearchParams.search || '');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearchParams.search || '');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(
+        initialSearchParams.categories ? initialSearchParams.categories.split(',') : []
+    );
+    const [activeFilter, setActiveFilter] = useState<string | null>(
+        initialSearchParams.featured === 'true' ? 'featured' :
+            initialSearchParams.onSale === 'true' ? 'onSale' : null
+    );
     const [showFilters, setShowFilters] = useState(false);
-    const [activeFilter, setActiveFilter] = useState<string | null>(null);
-
-    // Fetch categories on mount
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch('/api/categories');
-                if (response.ok) {
-                    const data = await response.json();
-                    setCategories(data.categories || []);
-                }
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        };
-
-        fetchCategories();
-    }, []);
 
     // Debounce search term
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchTerm(searchTerm);
-            if (searchTerm !== debouncedSearchTerm) {
-                setCurrentPage(1); // Reset to first page on new search
-            }
-        }, 500); // 500ms delay
+        }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchTerm, debouncedSearchTerm]);
+    }, [searchTerm]);
 
-    // Fetch products when filters change
-    useEffect(() => {
-        const fetchProducts = async () => {
-            // Only show full page loading on initial load
-            if (loading) {
-                setLoading(true);
-            } else {
-                setProductsLoading(true);
-            }
-
-            try {
-                const params = new URLSearchParams();
-                params.set('page', currentPage.toString());
-                params.set('limit', ITEMS_PER_PAGE.toString());
-
-                if (activeFilter === 'featured') params.set('featured', 'true');
-                if (activeFilter === 'onSale') params.set('onSale', 'true');
-                if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
-                if (selectedCategories.length > 0) {
-                    params.set('categories', selectedCategories.join(','));
-                }
-
-                const response = await fetch(`/api/products?${params.toString()}`);
-                if (response.ok) {
-                    const data: ProductsResponse = await response.json();
-
-                    // Apply client-side sorting if needed
-                    const sortedProducts = [...data.products];
-                    switch (sortBy) {
-                        case 'price-low':
-                            sortedProducts.sort((a, b) => a.price - b.price);
-                            break;
-                        case 'price-high':
-                            sortedProducts.sort((a, b) => b.price - a.price);
-                            break;
-                        case 'name':
-                            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
-                            break;
-                        case 'rating':
-                            sortedProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-                            break;
-                    }
-
-                    setProducts(sortedProducts);
-                    setTotalPages(data.totalPages);
-                    setTotalProducts(data.total);
-                }
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            } finally {
-                setLoading(false);
-                setProductsLoading(false);
-            }
-        };
-
-        fetchProducts();
-    }, [loading, currentPage, activeFilter, debouncedSearchTerm, selectedCategories, sortBy]);
-
-    // Initialize state from URL parameters on mount
-    useEffect(() => {
-        const initialSearch = searchParams.get('search');
-        const initialSort = searchParams.get('sort');
-        const initialCategories = searchParams.get('categories');
-        const initialFilter = searchParams.get('filter');
-        const initialPage = searchParams.get('page');
-
-        if (initialSearch) setSearchTerm(initialSearch);
-        if (initialSort) setSortBy(initialSort);
-        if (initialCategories) setSelectedCategories(initialCategories.split(','));
-        if (initialFilter) setActiveFilter(initialFilter);
-        if (initialPage) setCurrentPage(Number(initialPage));
-    }, [searchParams]);
-
-    // Update URL when filters change
+    // Update URL when filters change (this triggers server re-fetch)
     useEffect(() => {
         const params = new URLSearchParams();
 
         if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
-        if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
         if (selectedCategories.length > 0) {
             params.set('categories', selectedCategories.join(','));
         }
-        if (activeFilter) params.set('filter', activeFilter);
+        if (activeFilter === 'featured') params.set('featured', 'true');
+        if (activeFilter === 'onSale') params.set('onSale', 'true');
         if (currentPage > 1) params.set('page', currentPage.toString());
 
         const newUrl = params.toString() ? `/products?${params.toString()}` : '/products';
-        router.replace(newUrl, { scroll: false });
-    }, [debouncedSearchTerm, sortBy, selectedCategories, activeFilter, currentPage, router]);
+
+        // Use startTransition for smoother updates
+        startTransition(() => {
+            router.push(newUrl, { scroll: false });
+        });
+    }, [debouncedSearchTerm, selectedCategories, activeFilter, currentPage, router]);
 
     const toggleCategory = (category: string) => {
         setSelectedCategories(prev =>
@@ -161,22 +88,26 @@ export default function ProductsContent() {
                 ? prev.filter(c => c !== category)
                 : [...prev, category]
         );
-        setCurrentPage(1);
     };
 
     const clearFilters = () => {
         setSearchTerm('');
         setDebouncedSearchTerm('');
-        setSortBy('newest');
         setSelectedCategories([]);
         setActiveFilter(null);
-        setCurrentPage(1);
+        router.push('/products');
     };
 
     const handlePageChange = (page: number) => {
         if (page < 1 || page > totalPages || page === currentPage) return;
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', page.toString());
+
+        startTransition(() => {
+            router.push(`/products?${params.toString()}`, { scroll: false });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
     };
 
     const gridClasses = showFilters
@@ -185,105 +116,6 @@ export default function ProductsContent() {
 
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
     const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, totalProducts);
-
-    // Loading skeleton
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-                {/* Hero Header Skeleton */}
-                <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden">
-                    {/* Animated Background */}
-                    <div className="absolute inset-0">
-                        <div className="absolute top-0 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-                        <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-                        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-                    </div>
-
-                    <div className="relative container mx-auto px-4 py-12">
-                        <div className="text-center mb-6">
-                            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full mb-3 animate-pulse">
-                                <span className="w-2 h-2 bg-white/30 rounded-full"></span>
-                                <span className="h-4 w-32 bg-white/30 rounded"></span>
-                            </div>
-                            <div className="h-12 bg-white/20 rounded w-96 mx-auto mb-4 animate-pulse"></div>
-                            <div className="h-6 bg-white/20 rounded w-[600px] max-w-full mx-auto animate-pulse"></div>
-                        </div>
-                        <div className="max-w-5xl mx-auto">
-                            <div className="flex flex-col md:flex-row gap-3">
-                                <div className="flex-1 h-14 bg-white/20 rounded-xl animate-pulse"></div>
-                                <div className="h-14 w-full md:w-40 bg-white/20 rounded-xl animate-pulse"></div>
-                            </div>
-                            <div className="flex gap-3 mt-4">
-                                <div className="h-10 w-24 bg-white/20 rounded-full animate-pulse"></div>
-                                <div className="h-10 w-24 bg-white/20 rounded-full animate-pulse"></div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Content Skeleton */}
-                <div className="container mx-auto px-4 py-12">
-                    <div className="mb-8">
-                        <div className="bg-white rounded-xl border-2 border-gray-100 p-6 shadow-sm animate-pulse">
-                            <div className="flex flex-col sm:flex-row justify-between gap-4">
-                                <div className="space-y-2">
-                                    <div className="h-8 bg-gray-200 rounded w-48"></div>
-                                    <div className="h-5 bg-gray-200 rounded w-64"></div>
-                                </div>
-                                <div className="h-10 bg-gray-200 rounded w-48"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col lg:flex-row gap-8">
-                        {/* Filters Skeleton - Only show if filters are visible */}
-                        {showFilters && (
-                            <div className="lg:w-80">
-                                <div className="bg-white rounded-xl shadow-sm border-2 border-gray-100 p-6 sticky top-4 animate-pulse">
-                                    <div className="h-6 bg-gray-200 rounded mb-6"></div>
-                                    <div className="space-y-6">
-                                        <div>
-                                            <div className="h-5 bg-gray-200 rounded w-24 mb-3"></div>
-                                            <div className="space-y-3">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <div key={i} className="h-10 bg-gray-100 rounded"></div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Products Grid Skeleton */}
-                        <div className={`${showFilters ? 'lg:flex-1' : 'w-full'}`}>
-                            <div className={showFilters
-                                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                            }>
-                                {[...Array(12)].map((_, i) => (
-                                    <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-                                        <div className="h-48 bg-gray-200"></div>
-                                        <div className="p-5 space-y-3">
-                                            <div className="h-4 bg-gray-200 rounded w-20"></div>
-                                            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                                            <div className="h-4 bg-gray-200 rounded"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                                            <div className="h-8 bg-gray-200 rounded w-24"></div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="h-10 bg-gray-200 rounded w-28"></div>
-                                                <div className="h-10 bg-gray-200 rounded w-20"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -360,10 +192,7 @@ export default function ProductsContent() {
                         {/* Quick Filter Pills */}
                         <div className="flex flex-wrap gap-3 mt-4">
                             <button
-                                onClick={() => {
-                                    setActiveFilter(activeFilter === 'featured' ? null : 'featured');
-                                    setCurrentPage(1);
-                                }}
+                                onClick={() => setActiveFilter(activeFilter === 'featured' ? null : 'featured')}
                                 className={`px-4 py-2 rounded-full transition-all ${activeFilter === 'featured'
                                     ? 'bg-white text-blue-600 shadow-lg'
                                     : 'bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20'
@@ -372,10 +201,7 @@ export default function ProductsContent() {
                                 ⭐ Featured
                             </button>
                             <button
-                                onClick={() => {
-                                    setActiveFilter(activeFilter === 'onSale' ? null : 'onSale');
-                                    setCurrentPage(1);
-                                }}
+                                onClick={() => setActiveFilter(activeFilter === 'onSale' ? null : 'onSale')}
                                 className={`px-4 py-2 rounded-full transition-all ${activeFilter === 'onSale'
                                     ? 'bg-white text-red-600 shadow-lg'
                                     : 'bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20'
@@ -403,37 +229,18 @@ export default function ProductsContent() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-xl border-2 border-gray-100 p-6 shadow-sm">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                                {productsLoading ? (
+                                {isPending ? (
                                     <span className="flex items-center gap-2">
                                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                                        Searching...
+                                        Loading...
                                     </span>
                                 ) : (
                                     `${totalProducts} Products Found`
                                 )}
                             </h2>
                             <p className="text-gray-600">
-                                {!productsLoading && totalProducts > 0 && `Showing ${startIndex}-${endIndex} of ${totalProducts} results`}
+                                {!isPending && totalProducts > 0 && `Showing ${startIndex}-${endIndex} of ${totalProducts} results`}
                             </p>
-                        </div>
-
-                        {/* Sort Dropdown */}
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm text-gray-600 font-medium">Sort by:</span>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => {
-                                    setSortBy(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 font-medium"
-                            >
-                                <option value="newest">Newest First</option>
-                                <option value="name">Name (A-Z)</option>
-                                <option value="price-low">Price: Low to High</option>
-                                <option value="price-high">Price: High to Low</option>
-                                <option value="rating">Highest Rated</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -518,29 +325,10 @@ export default function ProductsContent() {
 
                     {/* Products Grid */}
                     <div className={`${showFilters ? 'lg:flex-1' : 'w-full'}`}>
-                        {productsLoading ? (
-                            <div className={gridClasses}>
-                                {[...Array(12)].map((_, i) => (
-                                    <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-                                        <div className="h-48 bg-gray-200"></div>
-                                        <div className="p-5 space-y-3">
-                                            <div className="h-4 bg-gray-200 rounded w-20"></div>
-                                            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                                            <div className="h-4 bg-gray-200 rounded"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                                            <div className="h-8 bg-gray-200 rounded w-24"></div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="h-10 bg-gray-200 rounded w-28"></div>
-                                                <div className="h-10 bg-gray-200 rounded w-20"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : products.length > 0 ? (
+                        {initialProducts.length > 0 ? (
                             <>
                                 <div className={gridClasses}>
-                                    {products.map((product) => (
+                                    {initialProducts.map((product) => (
                                         <ProductCard key={product.id} product={product} />
                                     ))}
                                 </div>
