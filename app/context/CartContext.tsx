@@ -1,3 +1,5 @@
+//app/context/CartContext.tsx
+
 'use client';
 
 import { CartContextType, CartItem } from "@/types/cart";
@@ -11,7 +13,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const { showToast } = useToast();
     const [items, setItems] = useState<CartItem[]>([]);
     const [isHydrated, setIsHydrated] = useState(false);
+    const [pendingToasts, setPendingToasts] = useState<Array<{ message: string; type: 'success' | 'error' | 'info' }>>([]);
     const saveTimeoutRef = useRef<NodeJS.Timeout>(null);
+
+    // Process pending toasts after render
+    useEffect(() => {
+        if (pendingToasts.length > 0) {
+            const nextToast = pendingToasts[0];
+            showToast(nextToast.message, nextToast.type);
+            setPendingToasts(prev => prev.slice(1));
+        }
+    }, [pendingToasts, showToast]);
 
     // Initialize cart from localStorage ONLY on client side
     useEffect(() => {
@@ -61,12 +73,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // console.log('addToCart called:', { product: product.name, quantity, stock: product.stock });
 
         if (product.stock <= 0) {
-            showToast(`${product.name} is out of stock`, 'error');
+            setPendingToasts(prev => [...prev, { message: `${product.name} is out of stock`, type: 'error' }]);
             return;
         }
 
         if (quantity <= 0) {
-            showToast('Quantity must be at least 1', 'error');
+            setPendingToasts(prev => [...prev, { message: 'Quantity must be at least 1', type: 'error' }]);
             return;
         }
 
@@ -78,7 +90,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             // console.log('New quantity would be:', newQuantity, 'Stock:', product.stock);
 
             if (newQuantity > product.stock) {
-                showToast(`Only ${product.stock} items available in stock`, 'error');
+                setPendingToasts(prev => [...prev, { message: `Only ${product.stock} items available in stock`, type: 'error' }]);
                 return prevItems;
             }
 
@@ -94,21 +106,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             }
 
             // console.log('Returning updated items:', updatedItems);
+            setPendingToasts(prev => [...prev, { message: `${product.name} added to cart`, type: 'success' }]);
             return updatedItems;
         });
 
-        showToast(`${product.name} added to cart`, 'success');
-    }, [showToast]);
+    }, []);
 
     const removeFromCart = useCallback((productId: string) => {
         setItems(prevItems => {
             const itemToRemove = prevItems.find(item => item.product.id === productId);
             if (itemToRemove) {
-                showToast(`${itemToRemove.product.name} removed from cart`, 'info');
+                setPendingToasts(prev => [...prev, { message: `${itemToRemove.product.name} removed from cart`, type: 'info' }]);
             }
             return prevItems.filter(item => item.product.id !== productId);
         });
-    }, [showToast]);
+    }, []);
 
     const updateQuantity = useCallback((productId: string, quantity: number) => {
         if (quantity <= 0) {
@@ -121,7 +133,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             if (!itemToUpdate) return prevItems;
 
             if (quantity > itemToUpdate.product.stock) {
-                showToast(`Only ${itemToUpdate.product.stock} items available in stock`, 'error');
+                setPendingToasts(prev => [...prev, { message: `Only ${itemToUpdate.product.stock} items available in stock`, type: 'error' }]);
                 return prevItems;
             }
 
@@ -131,12 +143,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     : item
             );
         });
-    }, [removeFromCart, showToast]);
+    }, [removeFromCart]);
 
     const clearCart = useCallback(() => {
         setItems([]);
-        showToast('Cart cleared', 'info');
-    }, [showToast]);
+        setPendingToasts(prev => [...prev, { message: 'Cart cleared', type: 'info' }]);
+    }, []);
 
     const getTotalItems = useCallback(() => {
         return items.reduce((total, item) => total + item.quantity, 0);
@@ -160,14 +172,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
             const newOrder = await response.json();
             clearCart();
-            showToast('Order placed successfully!', 'success');
+            setPendingToasts(prev => [...prev, { message: 'Order placed successfully!', type: 'success' }]);
 
             return newOrder;
         } catch (error) {
             console.error('Error creating order:', error);
-            showToast('Failed to place order', 'error');
+            setPendingToasts(prev => [...prev, { message: 'Failed to place order', type: 'error' }]);
         }
-    }, [clearCart, showToast]);
+    }, [clearCart]);
 
     return (
         <CartContext.Provider value={{

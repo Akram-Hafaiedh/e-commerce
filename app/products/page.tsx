@@ -74,9 +74,10 @@ async function getCategories(): Promise<Category[]> {
     }
 }
 
-export async function generateMetadata({ searchParams }: { searchParams: SearchParams }) {
-    const page = searchParams.page || '1';
-    const search = searchParams.search || '';
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SearchParams> }) {
+    const resolvedSearchParams = await searchParams;
+    const page = resolvedSearchParams.page || '1';
+    const search = resolvedSearchParams.search || '';
 
     return {
         title: search
@@ -86,10 +87,12 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
     };
 }
 
-export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
     // Fetch data in parallel on the server
+    const resolvedSearchParams = await searchParams;
+
     const [initialData, categories] = await Promise.all([
-        getProducts(searchParams),
+        getProducts(resolvedSearchParams),
         getCategories()
     ]);
 
@@ -101,7 +104,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
                 initialPage={initialData.page}
                 initialTotalPages={initialData.totalPages}
                 categories={categories}
-                searchParams={searchParams}
+                searchParams={resolvedSearchParams}
             />
         </Suspense>
     );
