@@ -20,34 +20,80 @@ model User {
   isActive  Boolean   @default(true)
   lastLogin DateTime?
   phone     String?
-  cart      Cart? // One-to-one relationship
-  orders    Order[]
+
+  // Relations
+  cart           Cart? // One-to-one relationship
+  orders         Order[]
+  savedAddresses SavedAddress[]
 
   @@map("users")
 }
 
+model SavedAddress {
+  id     String @id @default(cuid())
+  userId String
+
+  firstName String
+  lastName  String
+  address   String
+  city      String
+  zipCode   String
+  country   String
+  phone     String?
+
+  isDefault Boolean @default(false) // Default shipping address
+  label     String? // "Home", "Work", etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isDefault])
+  @@map("saved_addresses")
+}
+
 model Product {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   name          String
-  description   String
+  description   String  @db.Text
   price         Float
   originalPrice Float?
   image         String
-  slug          String   @unique
-  featured      Boolean  @default(false)
-  onSale        Boolean  @default(false)
-  rating        Float?
-  reviewCount   Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  categoryId    String
+  slug          String  @unique
+  sku           String? @unique // NEW: For inventory management
+  featured      Boolean @default(false)
+  onSale        Boolean @default(false)
+  isActive      Boolean @default(true) // NEW: Soft delete
 
+  // stock management
+  stock             Int @default(0) // CACHED: Sum of all inventory
+  lowStockThreshold Int @default(10) // NEW: Alert threshold
+
+  // Analytics
+  soldCount Int @default(0) // NEW: For bestsellers
+  viewCount Int @default(0) // NEW: For analytics
+
+  rating      Float?
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  categoryId  String
+
+  // Relations
   cartItems      CartItem[]
   orderItems     OrderItem[]
   category       Category        @relation(fields: [categoryId], references: [id])
   stockMovements StockMovement[]
   Inventory      Inventory[]
 
+  @@index([slug])
+  @@index([featured])
+  @@index([onSale])
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([stock])
   @@map("products")
 }
 
@@ -55,13 +101,13 @@ model Category {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
-  description String
+  description String   @db.Text
   image       String
   featured    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  parentId String? // Optional self-relation for subcategories
+  parentId String?
   parent   Category?  @relation("CategoryToSubcategories", fields: [parentId], references: [id])
   children Category[] @relation("CategoryToSubcategories")
   products Product[]
@@ -70,44 +116,82 @@ model Category {
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  date              DateTime    @default(now())
-  status            OrderStatus @default(PROCESSING)
-  total             Float
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id          String @id @default(cuid())
+  orderNumber String @unique // Human-readable order number
+
+  // Order Status
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Pricing Breakdown
+  subtotal     Float
+  shippingCost Float @default(0)
+  tax          Float @default(0)
+  discount     Float @default(0)
+  total        Float
+
+  // Customer Information
+  email  String
+  userId String?
+
+  // Shipping Address
   shippingFirstName String
   shippingLastName  String
   shippingAddress   String
   shippingCity      String
   shippingZipCode   String
   shippingCountry   String
-  paymentCardEnding String
-  paymentExpiryDate String
-  userId            String?
-  guestEmail        String?
-  orderNumber       String      @unique // Human-readable order number
-  items             OrderItem[]
-  cart              Cart?       @relation(fields: [cartId], references: [id])
-  user              User?       @relation(fields: [userId], references: [id])
-  cartId            String?
+  shippingPhone     String?
 
+  // payment information
+  paymentMethod     String? // "card", "paypal", "stripe"
+  paymentId         String? // Stripe/PayPal transaction ID
+  paymentCardEnding String? // Last 4 digits
+  paymentExpiryDate String
+  paidAt            DateTime?
+
+  // timestamps
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items  OrderItem[]
+  user   User?       @relation(fields: [userId], references: [id])
+  cart   Cart?       @relation(fields: [cartId], references: [id])
+  cartId String?
+
+  @@index([userId])
+  @@index([email]) // NEW: For guest order lookup
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([orderNumber])
   @@map("orders")
 }
 
 model OrderItem {
-  id          String     @id @default(cuid())
+  id          String  @id @default(cuid())
   orderId     String
   productId   String
-  quantity    Int
-  price       Float
-  product     Product    @relation(fields: [productId], references: [id])
-  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
   warehouseId String?
-  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id])
+  quantity    Int
+  price       Float // Price at time of purchase (important!)
+  productName String // NEW: Snapshot in case product deleted
+  productSku  String? // NEW: For inventory tracking
 
+  product   Product    @relation(fields: [productId], references: [id])
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  warehouse Warehouse? @relation(fields: [warehouseId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
   @@map("order_items")
 }
+
+// ============================================
+// CART & INVENTORY
+// ============================================
 
 model CartItem {
   id        String     @id @default(cuid())
@@ -115,13 +199,31 @@ model CartItem {
   cartId    String
   productId String
   status    CartStatus @default(ACTIVE)
-  cart      Cart       @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product    @relation(fields: [productId], references: [id])
   createdAt DateTime   @default(now())
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
   @@unique([cartId, productId])
   @@index([cartId, status])
   @@map("cart_items")
+}
+
+model Cart {
+  id        String    @id @default(cuid())
+  userId    String?   @unique // Optional - null for guest carts
+  sessionId String?   @unique // For guest users
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // for cleanup
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+  Order Order[]
+
+  @@index([sessionId])
+  @@index([expiresAt])
+  @@map("carts")
 }
 
 model Warehouse {
@@ -150,6 +252,8 @@ model Inventory {
   productId    String
   warehouseId  String
   quantity     Int      @default(0)
+  reserved     Int      @default(0) // NEW: For pending orders
+  available    Int      @default(0) // NEW: quantity - reserved
   minStock     Int?     @default(10)
   maxStock     Int?
   reorderPoint Int?     @default(20)
@@ -160,30 +264,20 @@ model Inventory {
   warehouse Warehouse @relation(fields: [warehouseId], references: [id])
 
   @@unique([productId, warehouseId])
+  @@index([productId])
+  @@index([available]) // NEW: For stock checks
   @@map("inventory")
-}
-
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String?    @unique // Optional - null for guest carts
-  sessionId String?    @unique // For guest users
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  Order     Order[]
-
-  @@map("carts")
 }
 
 model StockMovement {
   id           String       @id @default(cuid())
   productId    String
   warehouseId  String
-  quantity     Int
+  quantity     Int // Positive for increase, negative for decrease
+  stockBefore  Int // NEW: Audit trail
   stockAfter   Int
   movementType MovementType
-  referenceId  String?
+  referenceId  String? // Order ID, Transfer ID, etc.
   note         String?
   createdAt    DateTime     @default(now())
   createdBy    String?
@@ -191,6 +285,9 @@ model StockMovement {
   product   Product   @relation(fields: [productId], references: [id])
   warehouse Warehouse @relation(fields: [warehouseId], references: [id])
 
+  @@index([productId])
+  @@index([createdAt])
+  @@index([movementType])
   @@map("stock_movements")
 }
 
@@ -205,6 +302,7 @@ model Subscriber {
 
   @@index([isActive])
   @@index([subscribedAt])
+  @@map("subscribers")
 }
 
 model Campaign {
@@ -216,18 +314,23 @@ model Campaign {
   createdAt      DateTime @default(now())
 
   @@index([sentAt])
+  @@map("campaigns")
 }
 
+// ============================================
+// ENUMS
+// ============================================
+
 enum MovementType {
-  SALE
-  RETURN
-  RESTOCK
-  ADJUSTMENT
-  RESERVATION
-  RELEASE
-  TRANSFER_IN
-  TRANSFER_OUT
-  DAMAGED
+  SALE // Product sold
+  RETURN // Customer return
+  RESTOCK // New stock added
+  ADJUSTMENT // Manual correction
+  RESERVATION // Reserved for order
+  RELEASE // Reservation released
+  TRANSFER_IN // From another warehouse
+  TRANSFER_OUT // To another warehouse
+  DAMAGED // Damaged/lost
 }
 
 enum WarehouseType {
@@ -235,14 +338,6 @@ enum WarehouseType {
   REGIONAL
   STORE
   VIRTUAL
-}
-
-enum OrderStatus {
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  PENDING
 }
 
 enum UserRole {
@@ -255,4 +350,21 @@ enum CartStatus {
   SAVED_FOR_LATER
   PURCHASED
   ABANDONED
+}
+
+enum OrderStatus {
+  PENDING // Order created, payment pending
+  PROCESSING // Payment confirmed, preparing shipment
+  SHIPPED // Order shipped
+  DELIVERED // Order delivered
+  CANCELLED // Order cancelled
+  REFUNDED // Order refunded
+}
+
+enum PaymentStatus {
+  PENDING // Awaiting payment
+  PAID // Payment successful
+  FAILED // Payment failed
+  REFUNDED // Full refund
+  PARTIALLY_REFUNDED
 }
