@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 interface ToastProps {
     message: string;
-    type?: 'success' | 'error' | 'info';
+    type?: 'success' | 'error' | 'info' | 'warning';
     isVisible: boolean;
     onClose: () => void;
     duration?: number;
@@ -14,29 +14,24 @@ export default function Toast({
     type = 'success',
     isVisible,
     onClose,
-    duration = 3000
+    duration = 4000
 }: ToastProps) {
     const [shouldRender, setShouldRender] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
 
     const handleClose = useCallback(() => {
-        // Trigger exit animation
         setIsAnimating(false);
-        // Remove from DOM after animation completes
         setTimeout(() => {
             setShouldRender(false);
             onClose();
         }, 300);
     }, [onClose]);
 
-
     useEffect(() => {
         if (isVisible) {
             setShouldRender(true);
-            // Trigger enter animation
             setTimeout(() => setIsAnimating(true), 10);
 
-            // Auto-hide timer
             const timer = setTimeout(() => {
                 handleClose();
             }, duration);
@@ -45,52 +40,88 @@ export default function Toast({
         }
     }, [isVisible, duration, handleClose]);
 
-
-
     if (!shouldRender) return null;
 
-    const getBackgroundColor = () => {
+    const getStyles = () => {
+        const baseStyles = "flex items-center space-x-3 p-4 rounded-xl shadow-lg border backdrop-blur-sm max-w-sm transition-all duration-300 ease-out";
+
         switch (type) {
             case 'success':
-                return 'bg-green-500';
+                return `${baseStyles} bg-green-50 border-green-200 text-green-900`;
             case 'error':
-                return 'bg-red-500';
+                return `${baseStyles} bg-red-50 border-red-200 text-red-900`;
+            case 'warning':
+                return `${baseStyles} bg-yellow-50 border-yellow-200 text-yellow-900`;
             case 'info':
-                return 'bg-blue-500';
+                return `${baseStyles} bg-blue-50 border-blue-200 text-blue-900`;
             default:
-                return 'bg-green-500';
+                return `${baseStyles} bg-gray-50 border-gray-200 text-gray-900`;
         }
     };
 
     const getIcon = () => {
         switch (type) {
             case 'success':
-                return '✅';
+                return (
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                );
             case 'error':
-                return '❌';
+                return (
+                    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                );
+            case 'warning':
+                return (
+                    <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                );
             case 'info':
-                return 'ℹ️';
+                return (
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                );
             default:
-                return '✅';
+                return (
+                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                );
         }
     };
 
     return (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-6 right-6 z-50">
             <div
-                className={`${getBackgroundColor()} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm transition-all duration-300 ease-out ${isAnimating
-                    ? 'translate-x-0 opacity-100 scale-100'
-                    : 'translate-x-full opacity-0 scale-95'
+                className={`${getStyles()} ${isAnimating
+                        ? 'translate-x-0 opacity-100 scale-100'
+                        : 'translate-x-full opacity-0 scale-95'
                     }`}
             >
-                <span className="text-lg">{getIcon()}</span>
-                <span className="font-medium">{message}</span>
+                {getIcon()}
+                <span className="font-medium text-sm flex-1">{message}</span>
                 <button
                     onClick={handleClose}
-                    className="ml-4 text-white hover:text-gray-200 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-black/5"
                     aria-label="Close"
                 >
-                    ×
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
         </div>
