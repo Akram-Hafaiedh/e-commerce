@@ -166,6 +166,7 @@ export async function POST(request: NextRequest) {
                     productId,
                     warehouseId,
                     quantity,
+                    stockBefore: currentQuantity,
                     stockAfter: newQuantity,
                     movementType,
                     referenceId: referenceId || null,
