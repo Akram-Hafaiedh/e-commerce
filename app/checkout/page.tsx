@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CartItem } from '@/types/cart';
 import { useCart } from '../context/CartContext';
+import { processCheckout } from '../actions/checkout';
+
+interface FormErrors {
+    [key: string]: string;
+}
+
 
 export default function CheckoutPage() {
     const { items, getTotalPrice, clearCart } = useCart();
@@ -12,6 +18,8 @@ export default function CheckoutPage() {
 
     const [currentStep, setCurrentStep] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Form state
     const [formData, setFormData] = useState({
@@ -58,30 +66,122 @@ export default function CheckoutPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
+        const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+            [name]: newValue
         }));
+
+        // Clear error for this field
+        if (errors[name]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
+    };
+
+    // Client-side validation
+    const validateStep = (step: number): boolean => {
+        const newErrors: Record<string, string> = {};
+
+        if (step === 1) {
+            if (!formData.email) newErrors.email = 'Email is required';
+            if (!formData.firstName) newErrors.firstName = 'First name is required';
+            if (!formData.lastName) newErrors.lastName = 'Last name is required';
+            if (!formData.address) newErrors.address = 'Address is required';
+            if (!formData.city) newErrors.city = 'City is required';
+            if (!formData.zipCode) newErrors.zipCode = 'ZIP code is required';
+            if (!formData.country) newErrors.country = 'Country is required';
+        } else if (step === 2) {
+            if (!formData.cardNumber || formData.cardNumber.length !== 16) {
+                newErrors.cardNumber = 'Card number must be 16 digits';
+            }
+            if (!formData.cardName) newErrors.cardName = 'Name on card is required';
+            if (!formData.expiryDate) newErrors.expiryDate = 'Expiry date is required';
+            if (!formData.cvv || formData.cvv.length !== 3) {
+                newErrors.cvv = 'CVV must be 3 digits';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleNextStep = () => {
-        setCurrentStep(prev => prev + 1);
+        if (validateStep(currentStep)) {
+            setCurrentStep(prev => prev + 1);
+            setError(null);
+        }
     };
 
     const handlePreviousStep = () => {
         setCurrentStep(prev => prev - 1);
+        setError(null);
     };
 
     const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateStep(currentStep)) return;
+
         setIsProcessing(true);
+        setError(null);
 
-        // Simulate payment processing
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            const result = await processCheckout({
+                ...formData,
+                cartItems: items,
+                subtotal,
+                shippingCost: shipping,
+                tax,
+                total
+            });
 
-        // Clear cart and redirect to success page
-        clearCart();
-        router.push('/checkout/success');
+            if (result.success) {
+                // Clear cart
+                clearCart();
+
+                // Redirect to success page with order number
+                router.push(`/checkout/success?orderNumber=${result.orderNumber}`);
+            } else {
+                // Show error
+                setError(result.error || 'An error occurred');
+
+                // If there are field errors, set them
+                if (result.errors) {
+                    const fieldErrors: FormErrors = {};
+                    result.errors.forEach((err) => {
+                        if (err.path && err.path[0]) {
+                            fieldErrors[err.path[0]] = err.message;
+                        }
+                    });
+                    setErrors(fieldErrors);
+                }
+            }
+        } catch (err) {
+            console.error('Checkout error:', err);
+            setError('An unexpected error occurred. Please try again.');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Format card number with spaces
+    const formatCardNumber = (value: string) => {
+        const cleaned = value.replace(/\D/g, '');
+        return cleaned.slice(0, 16);
+    };
+
+    // Format expiry date
+    const formatExpiryDate = (value: string) => {
+        const cleaned = value.replace(/\D/g, '');
+        if (cleaned.length >= 2) {
+            return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
+        }
+        return cleaned;
     };
 
     // Step 1: Contact & Shipping
@@ -92,7 +192,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            Email Address
+                            Email Address *
                         </label>
                         <input
                             type="email"
@@ -101,9 +201,13 @@ export default function CheckoutPage() {
                             required
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.email ? 'border-red-500' : 'border-gray-300'
+                                }`}
                             placeholder="your@email.com"
                         />
+                        {errors.email && (
+                            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -113,7 +217,7 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                            First Name
+                            First Name *
                         </label>
                         <input
                             type="text"
@@ -122,12 +226,16 @@ export default function CheckoutPage() {
                             required
                             value={formData.firstName}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.firstName ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {errors.firstName && (
+                            <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                        )}
                     </div>
                     <div>
                         <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Last Name
+                            Last Name *
                         </label>
                         <input
                             type="text"
@@ -136,12 +244,16 @@ export default function CheckoutPage() {
                             required
                             value={formData.lastName}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.lastName ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {errors.lastName && (
+                            <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+                        )}
                     </div>
                     <div className="md:col-span-2">
                         <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                            Street Address
+                            Street Address *
                         </label>
                         <input
                             type="text"
@@ -150,12 +262,16 @@ export default function CheckoutPage() {
                             required
                             value={formData.address}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.address ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {errors.address && (
+                            <p className="mt-1 text-sm text-red-600">{errors.address}</p>
+                        )}
                     </div>
                     <div>
                         <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                            City
+                            City *
                         </label>
                         <input
                             type="text"
@@ -164,12 +280,16 @@ export default function CheckoutPage() {
                             required
                             value={formData.city}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.city ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {errors.city && (
+                            <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+                        )}
                     </div>
                     <div>
                         <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-                            ZIP Code
+                            ZIP Code *
                         </label>
                         <input
                             type="text"
@@ -178,12 +298,16 @@ export default function CheckoutPage() {
                             required
                             value={formData.zipCode}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.zipCode ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         />
+                        {errors.zipCode && (
+                            <p className="mt-1 text-sm text-red-600">{errors.zipCode}</p>
+                        )}
                     </div>
                     <div className="md:col-span-2">
                         <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                            Country
+                            Country *
                         </label>
                         <select
                             id="country"
@@ -191,7 +315,8 @@ export default function CheckoutPage() {
                             required
                             value={formData.country}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 ${errors.country ? 'border-red-500' : 'border-gray-300'
+                                }`}
                         >
                             <option value="">Select Country</option>
                             <option value="US">United States</option>
@@ -199,6 +324,9 @@ export default function CheckoutPage() {
                             <option value="UK">United Kingdom</option>
                             <option value="AU">Australia</option>
                         </select>
+                        {errors.country && (
+                            <p className="mt-1 text-sm text-red-600">{errors.country}</p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -228,7 +356,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center">
                     <span className="text-yellow-600 mr-2">🔒</span>
                     <p className="text-yellow-800 text-sm">
-                        This is a demo store. No real payments will be processed.
+                        This is a demo store. Use card: 4242424242424242
                     </p>
                 </div>
             </div>
@@ -236,7 +364,7 @@ export default function CheckoutPage() {
             <div className="space-y-4">
                 <div>
                     <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                        Card Number
+                        Card Number *
                     </label>
                     <input
                         type="text"
@@ -244,16 +372,32 @@ export default function CheckoutPage() {
                         name="cardNumber"
                         required
                         value={formData.cardNumber}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="1234 5678 9012 3456"
-                        maxLength={19}
+                        onChange={(e) => {
+                            const formatted = formatCardNumber(e.target.value);
+                            const syntheticEvent = {
+                                ...e,
+                                target: {
+                                    ...e.target,
+                                    name: 'cardNumber',
+                                    value: formatted,
+                                    type: 'text'
+                                }
+                            } as React.ChangeEvent<HTMLInputElement>;
+                            handleInputChange(syntheticEvent);
+                        }}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.cardNumber ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                        placeholder="4242424242424242"
+                        maxLength={16}
                     />
+                    {errors.cardNumber && (
+                        <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>
+                    )}
                 </div>
 
                 <div>
                     <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 mb-1">
-                        Name on Card
+                        Name on Card *
                     </label>
                     <input
                         type="text"
@@ -262,15 +406,19 @@ export default function CheckoutPage() {
                         required
                         value={formData.cardName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.cardName ? 'border-red-500' : 'border-gray-300'
+                            }`}
                         placeholder="John Doe"
                     />
+                    {errors.cardName && (
+                        <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
-                            Expiry Date
+                            Expiry Date *
                         </label>
                         <input
                             type="text"
@@ -278,15 +426,31 @@ export default function CheckoutPage() {
                             name="expiryDate"
                             required
                             value={formData.expiryDate}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onChange={(e) => {
+                                const formatted = formatExpiryDate(e.target.value);
+                                const syntheticEvent = {
+                                    ...e,
+                                    target: {
+                                        ...e.target,
+                                        name: 'expiryDate',
+                                        value: formatted,
+                                        type: 'text'
+                                    }
+                                } as React.ChangeEvent<HTMLInputElement>;
+                                handleInputChange(syntheticEvent);
+                            }}
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.expiryDate ? 'border-red-500' : 'border-gray-300'
+                                }`}
                             placeholder="MM/YY"
                             maxLength={5}
                         />
+                        {errors.expiryDate && (
+                            <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>
+                        )}
                     </div>
                     <div>
                         <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">
-                            CVV
+                            CVV *
                         </label>
                         <input
                             type="text"
@@ -294,11 +458,27 @@ export default function CheckoutPage() {
                             name="cvv"
                             required
                             value={formData.cvv}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onChange={(e) => {
+                                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 3);
+                                const syntheticEvent = {
+                                    ...e,
+                                    target: {
+                                        ...e.target,
+                                        name: 'cvv',
+                                        value: cleaned,
+                                        type: 'text'
+                                    }
+                                } as React.ChangeEvent<HTMLInputElement>;
+                                handleInputChange(syntheticEvent);
+                            }}
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 ${errors.cvv ? 'border-red-500' : 'border-gray-300'
+                                }`}
                             placeholder="123"
                             maxLength={3}
                         />
+                        {errors.cvv && (
+                            <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -349,6 +529,16 @@ export default function CheckoutPage() {
                     ))}
                 </div>
             </div>
+
+            {/* Show global error here if any */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                        <span className="text-red-600 mr-2">⚠️</span>
+                        <p className="text-red-800 text-sm">{error}</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 
@@ -374,8 +564,8 @@ export default function CheckoutPage() {
                             <div className="flex items-center justify-between mb-8">
                                 {[1, 2, 3].map((step) => (
                                     <div key={step} className="flex items-center">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === currentStep
-                                            ? 'bg-blue-600 text-white'
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${step === currentStep
+                                            ? 'bg-blue-600 text-white ring-4 ring-blue-100'
                                             : step < currentStep
                                                 ? 'bg-green-500 text-white'
                                                 : 'bg-gray-200 text-gray-500'
@@ -383,7 +573,7 @@ export default function CheckoutPage() {
                                             {step < currentStep ? '✓' : step}
                                         </div>
                                         {step < 3 && (
-                                            <div className={`w-16 h-1 mx-2 ${step < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                                            <div className={`w-16 h-1 mx-2 transition-all ${step < currentStep ? 'bg-green-500' : 'bg-gray-200'
                                                 }`} />
                                         )}
                                     </div>
@@ -411,7 +601,8 @@ export default function CheckoutPage() {
                                         <button
                                             type="button"
                                             onClick={handlePreviousStep}
-                                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                                            disabled={isProcessing}
+                                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
                                         >
                                             Previous
                                         </button>
@@ -431,7 +622,7 @@ export default function CheckoutPage() {
                                         <button
                                             type="submit"
                                             disabled={isProcessing}
-                                            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors font-medium flex items-center"
+                                            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center"
                                         >
                                             {isProcessing ? (
                                                 <>
@@ -464,7 +655,11 @@ export default function CheckoutPage() {
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Shipping</span>
                                     <span className="text-gray-900">
-                                        {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                                        {shipping === 0 ? (
+                                            <span className="text-green-600 font-medium">Free</span>
+                                        ) : (
+                                            `$${shipping.toFixed(2)}`
+                                        )}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -473,8 +668,8 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="border-t border-gray-200 pt-3">
                                     <div className="flex justify-between text-lg font-bold">
-                                        <span>Total</span>
-                                        <span>${total.toFixed(2)}</span>
+                                        <span className="text-gray-900">Total</span>
+                                        <span className="text-blue-600">${total.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -484,15 +679,15 @@ export default function CheckoutPage() {
                                 <div className="flex items-center justify-center space-x-6 text-gray-400">
                                     <div className="text-center">
                                         <div className="text-2xl mb-1">🔒</div>
-                                        <p className="text-xs">Secure Payment</p>
+                                        <p className="text-xs">Secure</p>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-2xl mb-1">🛡️</div>
-                                        <p className="text-xs">Guarantee</p>
+                                        <p className="text-xs">Protected</p>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-2xl mb-1">📦</div>
-                                        <p className="text-xs">Free Shipping</p>
+                                        <p className="text-xs">Fast Ship</p>
                                     </div>
                                 </div>
                             </div>

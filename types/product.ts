@@ -14,7 +14,7 @@ export interface Product {
     onSale: boolean;
     rating: number | null;
     reviewCount: number;
-    // stock: number;
+    stock?: number;
     createdAt: Date;
     updatedAt: Date;
 }
