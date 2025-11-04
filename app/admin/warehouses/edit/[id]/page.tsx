@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useParams } from 'next/navigation';
-import WarehouseForm from '@/app/components/forms/WarehouseForm';
+import WarehouseForm from '@/components/forms/WarehouseForm';
 import { Warehouse } from '@/types/warehouse';
 
 export default function EditWarehousePage() {

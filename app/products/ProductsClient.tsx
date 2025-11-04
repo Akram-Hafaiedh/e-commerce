@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import ProductCard from '../components/ProductCard';
-import Pagination from '../components/parts/Pagination';
+import ProductCard from '@/components/ProductCard';
+import Pagination from '@/components/parts/Pagination';
 import { Product } from '@/types/product';
 import { Category } from '@/types/category';
 

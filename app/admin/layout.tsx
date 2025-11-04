@@ -5,8 +5,8 @@ import { useAuth } from '@/app/hooks/useAuth';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import AdminSidebar from '../components/admin/AdminSidebar';
-import UserDropdown from '../components/UserDropdown';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import UserDropdown from '@/components/UserDropdown';
 
 export default function AdminLayout({
   children,

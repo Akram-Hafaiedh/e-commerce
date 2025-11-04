@@ -2,8 +2,8 @@
 import { useEffect, useState, useMemo } from 'react';
 
 import { CategoryWithCount } from "@/types/category";
-import CategoryCard from "../components/CategoryCard";
-import Pagination from "../components/parts/Pagination";
+import CategoryCard from "@/components/CategoryCard";
+import Pagination from "@/components/parts/Pagination";
 import Link from 'next/link';
 import Image from 'next/image';
 

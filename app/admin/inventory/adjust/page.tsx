@@ -130,7 +130,7 @@ export default function StockAdjustmentPage() {
             router.push('/admin/inventory');
             router.refresh();
         } catch (error: unknown) {
-            setError(getErrorMessage(error));  // Use your error helper
+            setError(getErrorMessage(error));
             console.error('Error adjusting stock:', error);
         } finally {
             setLoading(false);

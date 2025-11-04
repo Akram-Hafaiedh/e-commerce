@@ -1,6 +1,6 @@
 'use client';
 
-import WarehouseForm from '@/app/components/forms/WarehouseForm';
+import WarehouseForm from '@/components/forms/WarehouseForm';
 import { useAuth } from '@/app/hooks/useAuth';
 
 export default function NewWarehousePage() {

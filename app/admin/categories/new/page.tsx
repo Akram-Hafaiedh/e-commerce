@@ -1,6 +1,6 @@
 'use client';
 
-import CategoryForm from '@/app/components/forms/CategoryForm';
+import CategoryForm from '@/components/forms/CategoryForm';
 import { useAuth } from '@/app/hooks/useAuth';
 
 export default function NewCategoryPage() {

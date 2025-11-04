@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useParams } from 'next/navigation';
 import { Category } from '@/types/category';
-import CategoryForm from '@/app/components/forms/CategoryForm';
+import CategoryForm from '@/components/forms/CategoryForm';
 
 export default function EditCategoryPage() {
     const { isAdmin, isLoading } = useAuth();

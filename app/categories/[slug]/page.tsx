@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import ProductCard from '@/app/components/ProductCard';
-import Pagination from '@/app/components/parts/Pagination';
+import ProductCard from '@/components/ProductCard';
+import Pagination from '@/components/parts/Pagination';
 import { CategoryWithCount } from '@/types/category';
 import { Product } from '@/types/product';
 

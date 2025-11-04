@@ -1,6 +1,6 @@
 'use client';
 
-import ProductForm from '@/app/components/forms/ProductForm';
+import ProductForm from '@/components/forms/ProductForm';
 import { useAuth } from '@/app/hooks/useAuth';
 
 export default function NewProductPage() {

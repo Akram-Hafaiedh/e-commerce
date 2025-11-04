@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useParams } from 'next/navigation';
-import ProductForm from '@/app/components/forms/ProductForm';
+import ProductForm from '@/components/forms/ProductForm';
 import { Product } from '@/types/product';
 
 export default function EditProductPage() {
