@@ -1,4 +1,3 @@
-import { Order } from "./order";
 import { Product } from "./product";
 
 export interface CartItem {
@@ -15,8 +14,6 @@ export interface CartContextType {
     clearCart: () => void;
     getTotalItems: () => number;
     getTotalPrice: () => number;
-    orders: Order[];
-    addOrder: (order: Omit<Order, 'id'>) => void;
 }
 
 

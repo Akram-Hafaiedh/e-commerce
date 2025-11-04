@@ -4,7 +4,6 @@
 
 import { CartContextType, CartItem } from "@/types/cart";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Order } from "@/types/order";
 import { useToast } from "./ToastContext";
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -158,29 +157,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
     }, [items]);
 
-    const addOrder = useCallback(async (orderData: Omit<Order, 'id'>) => {
-        try {
-            const response = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to create order');
-            }
-
-            const newOrder = await response.json();
-            clearCart();
-            setPendingToasts(prev => [...prev, { message: 'Order placed successfully!', type: 'success' }]);
-
-            return newOrder;
-        } catch (error) {
-            console.error('Error creating order:', error);
-            setPendingToasts(prev => [...prev, { message: 'Failed to place order', type: 'error' }]);
-        }
-    }, [clearCart]);
-
     return (
         <CartContext.Provider value={{
             items,
@@ -190,8 +166,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             clearCart,
             getTotalItems,
             getTotalPrice,
-            orders: [],
-            addOrder,
         }}>
             {children}
         </CartContext.Provider>
