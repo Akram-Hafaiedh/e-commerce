@@ -1,6 +1,12 @@
-'use client';
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: 'Privacy Policy - ShopStore',
+    description: 'Learn how ShopStore collects, uses, and protects your personal information. Your privacy is important to us.',
+}
 
 export default function PrivacyPage() {
+    const currentYear = new Date().getFullYear();
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
             {/* Hero Section */}
@@ -34,7 +40,7 @@ export default function PrivacyPage() {
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                             <div className="prose prose-lg max-w-none">
                                 <p className="text-gray-600 text-lg mb-8">
-                                    Last updated: {new Date().getFullYear()}. This Privacy Policy describes how ShopStore collects, uses,
+                                    Last updated: {currentYear}. This Privacy Policy describes how ShopStore collects, uses,
                                     and shares your personal information when you visit or make a purchase from our website.
                                 </p>
 

@@ -1,7 +1,10 @@
-'use client';
-
+import { Metadata } from 'next';
 import Link from 'next/link';
 
+export const metadata: Metadata = {
+    title: 'Returns & Refunds Policy - ShopStore',
+    description: 'Our 30-day hassle-free return policy. Learn about returns, refunds, and how to send items back for a full refund.',
+};
 export default function ReturnsPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">

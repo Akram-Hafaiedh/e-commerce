@@ -1,6 +1,10 @@
-'use client';
-
+import { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+    title: 'About ShopStore - Our Story & Mission',
+    description: 'Learn about ShopStore journey, values, and mission to revolutionize online shopping with exceptional quality and customer experience.',
+};
 
 export default function AboutPage() {
     return (

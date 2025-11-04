@@ -1,6 +1,10 @@
-'use client';
-
+import { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+    title: 'Shipping Information - ShopStore',
+    description: 'Fast, reliable shipping options. Learn about delivery times, shipping costs, and order tracking.',
+};
 
 export default function ShippingPage() {
     return (

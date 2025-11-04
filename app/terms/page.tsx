@@ -1,6 +1,12 @@
-'use client';
+import { Metadata } from "next";
 
+export const metadata: Metadata = {
+    title: 'Terms of Service - ShopStore',
+    description: 'Read our Terms of Service to understand the rules and guidelines for using ShopStore website and services.',
+}
 export default function TermsPage() {
+
+    const currentYear = new Date().getFullYear();
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
             {/* Hero Section */}
@@ -34,7 +40,7 @@ export default function TermsPage() {
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                             <div className="prose prose-lg max-w-none">
                                 <p className="text-gray-600 text-lg mb-8">
-                                    Last updated: {new Date().getFullYear()}. These Terms of Service govern your use of
+                                    Last updated: {currentYear}. These Terms of Service govern your use of
                                     ShopStore website and the services we provide.
                                 </p>
 
