@@ -1,3 +1,4 @@
+//types/order.ts
 import { Order, OrderItem, OrderStatus, PaymentStatus, Product } from '@prisma/client';
 
 // Order with items and product details
@@ -27,6 +28,14 @@ export interface OrderSummary {
     paymentStatus: PaymentStatus;
     total: number;
     createdAt: Date;
+    items: {
+        product: {
+            name: string
+            image: string
+        }
+        quantity: number
+        price: number
+    }[]
     itemCount: number;
 }
 

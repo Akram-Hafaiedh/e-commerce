@@ -2,6 +2,7 @@
 'use client'
 import { useState } from 'react'
 import { signOut } from 'next-auth/react'
+import { useBodyScrollLock } from '@/app/hooks/useBodyScrollLock'
 
 interface DeleteAccountButtonProps {
     userId: string
@@ -11,6 +12,8 @@ export default function DeleteAccountButton({ userId }: DeleteAccountButtonProps
     const [showModal, setShowModal] = useState(false)
     const [confirmText, setConfirmText] = useState('')
     const [isDeleting, setIsDeleting] = useState(false)
+
+    useBodyScrollLock(showModal)
 
     const handleDelete = async () => {
         if (confirmText !== 'DELETE') return
@@ -49,7 +52,7 @@ export default function DeleteAccountButton({ userId }: DeleteAccountButtonProps
 
             {/* Confirmation Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm opacity-100 duration-200 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
                     <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full">
                         <div className="p-6">
                             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">

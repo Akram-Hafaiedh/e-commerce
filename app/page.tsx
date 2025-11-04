@@ -2,12 +2,12 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { Product } from '@/types/product';
 import { Category } from '@/types/category';
-import ProductCard from './components/ProductCard';
-import AnimatedProductSlider from './components/AnimatedProductSlider';
-import HeroSection from './components/home/HeroSection';
-import CategoriesSection from './components/home/CategoriesSection';
-import FeaturesSection from './components/home/FeaturesSection';
-import NewsletterSection from './components/home/NewsletterSection';
+import ProductCard from '@/components/ProductCard';
+import AnimatedProductSlider from '@/components/AnimatedProductSlider';
+import HeroSection from '@/components/home/HeroSection';
+import CategoriesSection from '@/components/home/CategoriesSection';
+import FeaturesSection from '@/components/home/FeaturesSection';
+import NewsletterSection from '@/components/home/NewsletterSection';
 
 function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
@@ -37,10 +37,10 @@ function ProductGridSkeleton({ count = 8 }: { count?: number }) {
         </div>
       </div>
     </section>
-  ); 
+  );
 }
 
-function SliderSkeleton({backgroundColor = 'bg-gray-100', hasColoredBg = false}: { backgroundColor?: string; hasColoredBg?: boolean; } = {}) {
+function SliderSkeleton({ backgroundColor = 'bg-gray-100', hasColoredBg = false }: { backgroundColor?: string; hasColoredBg?: boolean; } = {}) {
   return (
     <section className={`py-16 ${backgroundColor}`}>
       <div className="container mx-auto px-4">

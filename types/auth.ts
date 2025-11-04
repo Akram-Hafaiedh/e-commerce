@@ -1,14 +1,17 @@
-import { User as NextAuthUser } from "next-auth";
 
-export interface User extends NextAuthUser {
+export interface User {
     id: string;
-    name: string | null;
+    name: string;
     email: string;
-    // image?: string;
-    role: 'USER' | 'ADMIN' | string;
+    role: 'USER' | 'ADMIN';
     createdAt: string;
+    updatedAt: string;
+    address?: string | null;
+    avatar?: string | null;
+    isActive: boolean;
+    lastLogin?: string | null;
+    phone?: string | null;
 }
-
 export interface UserInDB extends User {
     password: string; // Hashed password
 }

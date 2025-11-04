@@ -20,3 +20,8 @@ export async function requireAuth(callback?: (session: NextAuthSession) => boole
 export async function requireAdmin() {
     return requireAuth((session) => session.user.role === 'ADMIN');
 }
+
+export async function getCurrentUser() {
+    const session = await getServerSession(authOptions);
+    return session?.user
+}
