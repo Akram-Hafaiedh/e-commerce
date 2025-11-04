@@ -1,89 +1,104 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { useAuth } from '@/app/hooks/useAuth';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { getInventoryList } from '@/app/actions/inventory';
 import { Warehouse } from '@/types/warehouse';
 import { InventoryItem } from '@/types/inventory';
-import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 
 export default function InventoryManagement() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { isAdmin, isLoading } = useAuth();
-    const [pageLoading, setPageLoading] = useState(false);
+    const [isPending, startTransition] = useTransition();
+
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
-    const [pageSize, setPageSize] = useState(12);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Filters
     const [selectedWarehouse, setSelectedWarehouse] = useState('all');
-    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [pageSize, setPageSize] = useState(12);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
-    const [searchQuery, setSearchQuery] = useState('');
 
-    const fetchInventory = useCallback(async (page: number) => {
-        setPageLoading(true);
-        try {
-            const params = new URLSearchParams();
-            params.append('page', page.toString());
-            params.append('limit', pageSize.toString());
-            if (searchQuery) {
-                params.append('search', searchQuery);
-            }
-            if (selectedWarehouse && selectedWarehouse !== 'all') {
-                params.append('warehouseId', selectedWarehouse);
-            }
+    // Use ref to track if initial load is done
+    const initialLoadDone = useRef(false);
 
-            const response = await fetch(`/api/admin/inventory?${params}`);
-            if (response.ok) {
-                const data = await response.json();
-                setInventory(data.inventory || []);
-                setTotalPages(data.pagination.totalPages);
-                setTotalCount(data.pagination.totalCount);
-                setCurrentPage(page);
-            } else {
-                setError('Failed to fetch inventory');
-            }
-        } catch (error) {
-            console.error('Error fetching inventory:', error);
-            setError('Error fetching inventory');
-        } finally {
-            setLoading(false);
-            setPageLoading(false);
-        }
-    }, [selectedWarehouse, pageSize, searchQuery]);
-
-    const fetchWarehouses = useCallback(async () => {
-        try {
-            const response = await fetch('/api/admin/warehouses');
-            if (response.ok) {
-                const data = await response.json();
-                setWarehouses(data.warehouses || []);
-            }
-        } catch (error) {
-            console.error('Error fetching warehouses:', error);
-        }
-    }, []);
-
+    // Fetch warehouses on mount
     useEffect(() => {
         if (isAdmin && !isLoading) {
-            fetchWarehouses();
-            fetchInventory(1);
+            fetch('/api/admin/warehouses')
+                .then(r => r.json())
+                .then(data => setWarehouses(data.warehouses || []))
+                .catch(err => console.error('Error fetching warehouses:', err));
+        }
+    }, [isAdmin, isLoading]);
+
+    // Fetch inventory using server action
+    const fetchInventory = useCallback((page: number) => {
+        startTransition(async () => {
+            try {
+                const result = await getInventoryList({
+                    page,
+                    limit: pageSize,
+                    warehouseId: selectedWarehouse !== 'all' ? selectedWarehouse : undefined,
+                    search: searchQuery || undefined
+                });
+
+                if (result.success) {
+                    setInventory(result.inventory as InventoryItem[]);
+                    setTotalPages(result.pagination.totalPages);
+                    setTotalCount(result.pagination.totalCount);
+                    setCurrentPage(page);
+                    setError('');
+                } else {
+                    setError(result.error || 'Failed to fetch inventory');
+                }
+            } catch (err) {
+                console.error('Error fetching inventory:', err);
+                setError('Error fetching inventory');
+            } finally {
+                setLoading(false);
+            }
+        });
+    }, [pageSize, selectedWarehouse, searchQuery]);
+
+    // Initial load - load URL params and fetch once
+    useEffect(() => {
+        if (isAdmin && !isLoading && !initialLoadDone.current) {
+            const page = searchParams.get('page');
+            const warehouse = searchParams.get('warehouse');
+            const size = searchParams.get('pageSize');
+
+            // Set state without triggering effects
+            if (warehouse && warehouse !== 'all') setSelectedWarehouse(warehouse);
+            if (size) setPageSize(Number(size));
+
+            fetchInventory(page ? Number(page) : 1);
+            initialLoadDone.current = true;
         } else if (!isLoading && !isAdmin) {
             setLoading(false);
         }
-    }, [isAdmin, isLoading, fetchWarehouses, fetchInventory]);
+    }, [isAdmin, isLoading, searchParams, fetchInventory]);
 
+    // Refetch when filters change (but NOT on initial load)
     useEffect(() => {
-        if (isAdmin && !isLoading) {
+        if (isAdmin && !isLoading && initialLoadDone.current) {
             fetchInventory(1);
         }
-    }, [selectedWarehouse, isAdmin, isLoading, fetchInventory, pageSize, searchQuery]);
+    }, [selectedWarehouse, pageSize, searchQuery, isAdmin, isLoading, fetchInventory]);
 
-    // Update URL when filters/page change
+    // Update URL when filters change
     useEffect(() => {
+        if (!initialLoadDone.current) return; // Don't update URL during initial load
+
         const params = new URLSearchParams();
         if (selectedWarehouse !== 'all') params.set('warehouse', selectedWarehouse);
         if (currentPage > 1) params.set('page', currentPage.toString());
@@ -93,19 +108,13 @@ export default function InventoryManagement() {
         router.push(`/admin/inventory${newUrl}`, { scroll: false });
     }, [selectedWarehouse, currentPage, pageSize, router]);
 
-    useEffect(() => {
-        const warehouse = searchParams.get('warehouse');
-        const page = searchParams.get('page');
-        const size = searchParams.get('pageSize');
-
-        if (warehouse) setSelectedWarehouse(warehouse);
-        if (page) setCurrentPage(Number(page));
-        if (size) setPageSize(Number(size));
-    }, [searchParams]);
-
-    const getStockStatus = (quantity: number, reorderPoint: number | null) => {
-        if (quantity === 0) return { status: 'out-of-stock', color: 'bg-red-100 text-red-800', text: 'Out of Stock' };
-        if (reorderPoint && quantity <= reorderPoint) return { status: 'low-stock', color: 'bg-orange-100 text-orange-800', text: 'Low Stock' };
+    const getStockStatus = (available: number, reorderPoint: number | null) => {
+        if (available === 0) {
+            return { status: 'out-of-stock', color: 'bg-red-100 text-red-800', text: 'Out of Stock' };
+        }
+        if (reorderPoint && available <= reorderPoint) {
+            return { status: 'low-stock', color: 'bg-orange-100 text-orange-800', text: 'Low Stock' };
+        }
         return { status: 'in-stock', color: 'bg-green-100 text-green-800', text: 'In Stock' };
     };
 
@@ -175,7 +184,8 @@ export default function InventoryManagement() {
                                 id="warehouse-filter"
                                 value={selectedWarehouse}
                                 onChange={(e) => setSelectedWarehouse(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                disabled={isPending}
+                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                             >
                                 <option value="all">All Warehouses</option>
                                 {warehouses.map(warehouse => (
@@ -196,7 +206,8 @@ export default function InventoryManagement() {
                                     setPageSize(Number(e.target.value));
                                     setCurrentPage(1);
                                 }}
-                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                disabled={isPending}
+                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                             >
                                 <option value={10}>10</option>
                                 <option value={25}>25</option>
@@ -213,7 +224,8 @@ export default function InventoryManagement() {
                                 id="product-search"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                disabled={isPending}
+                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                                 placeholder="Search products..."
                             />
                         </div>
@@ -251,13 +263,13 @@ export default function InventoryManagement() {
                                                 Warehouse
                                             </th>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Stock Level
+                                                Total / Available
+                                            </th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Reserved
                                             </th>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Status
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Min Stock
                                             </th>
                                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Last Updated
@@ -268,8 +280,7 @@ export default function InventoryManagement() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-
-                                        {pageLoading ? (
+                                        {isPending ? (
                                             <tr>
                                                 <td colSpan={7} className="px-6 py-8 text-center">
                                                     <div className="flex items-center justify-center">
@@ -278,94 +289,110 @@ export default function InventoryManagement() {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ) : (inventory.map((item) => {
-                                            const stockStatus = getStockStatus(item.quantity, item.reorderPoint);
-                                            return (
-                                                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center">
-                                                            <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                                <span className="text-sm font-medium text-gray-600">
-                                                                    {item.product.name.charAt(0)}
-                                                                </span>
-                                                            </div>
-                                                            <div className="ml-4">
-                                                                <div className="text-sm font-medium text-gray-900">
-                                                                    {item.product.name}
+                                        ) : (
+                                            inventory.map((item) => {
+                                                const stockStatus = getStockStatus(item.available, item.reorderPoint);
+                                                return (
+                                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center">
+                                                                <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                                    {item.product.images && item.product.images.length > 0 ? (
+                                                                        <Image
+                                                                            width={80}
+                                                                            height={80}
+                                                                            src={item.product.images[0]}
+                                                                            alt={item.product.name}
+                                                                            className="h-10 w-10 object-cover"
+                                                                        />
+                                                                    ) : item.product.image ? (
+                                                                        <Image
+                                                                            width={80}
+                                                                            height={80}
+                                                                            src={item.product.image}
+                                                                            alt={item.product.name}
+                                                                            className="h-10 w-10 object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="text-sm font-medium text-gray-600">
+                                                                            {item.product.name.charAt(0)}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
-                                                                <div className="text-sm text-gray-500">
-                                                                    ${item.product.price}
+                                                                <div className="ml-4">
+                                                                    <div className="text-sm font-medium text-gray-900">
+                                                                        {item.product.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-gray-500">
+                                                                        ${item.product.price} {item.product.sku && `• ${item.product.sku}`}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm text-gray-900">{item.warehouse.name}</div>
-                                                        <div className="text-sm text-gray-500">{item.warehouse.code}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {item.quantity} units
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
-                                                            {stockStatus.text}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {item.minStock || 'Not set'}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {new Date(item.lastUpdated).toLocaleDateString()}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                        <button className="text-blue-600 hover:text-blue-900 mr-4">
-                                                            Adjust
-                                                        </button>
-                                                        <Link
-                                                            href={`/admin/stock-movements?productId=${item.productId}&warehouseId=${item.warehouseId}`}
-                                                            className="text-purple-600 hover:text-purple-900"
-                                                        >
-                                                            History
-                                                        </Link>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        }))}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900">{item.warehouse.name}</div>
+                                                            <div className="text-sm text-gray-500">{item.warehouse.code}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                                {item.quantity} / {item.available} units
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">
+                                                                Total / Available
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900">
+                                                                {item.reserved > 0 ? (
+                                                                    <span className="text-orange-600 font-medium">{item.reserved} reserved</span>
+                                                                ) : (
+                                                                    <span className="text-gray-400">—</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
+                                                                {stockStatus.text}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            {new Date(item.lastUpdated).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                            <Link
+                                                                href="/admin/inventory/adjust"
+                                                                className="text-blue-600 hover:text-blue-900 mr-4"
+                                                            >
+                                                                Adjust
+                                                            </Link>
+                                                            <Link
+                                                                href={`/admin/stock-movements?productId=${item.product.id}&warehouseId=${item.warehouse.id}`}
+                                                                className="text-purple-600 hover:text-purple-900"
+                                                            >
+                                                                History
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
 
-                            {/* Pagination Controls */}
+                            {/* Pagination */}
                             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                                <div className="flex-1 flex justify-between sm:hidden">
-                                    <button
-                                        onClick={() => fetchInventory(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Previous
-                                    </button>
-                                    <button
-                                        onClick={() => fetchInventory(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-
                                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                                     <div>
                                         <p className="text-sm text-gray-700">
-                                            Showing page <span className="font-medium">{currentPage}</span> of <span className="font-medium">{totalPages}</span> ({totalCount} total results)
+                                            Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                                            <span className="font-medium">{totalPages}</span> ({totalCount} total results)
                                         </p>
                                     </div>
-                                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                                         <button
                                             onClick={() => fetchInventory(currentPage - 1)}
-                                            disabled={currentPage === 1}
+                                            disabled={currentPage === 1 || isPending}
                                             className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <span className="sr-only">Previous</span>
@@ -373,21 +400,25 @@ export default function InventoryManagement() {
                                                 <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                                             </svg>
                                         </button>
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                                            <button
-                                                key={page}
-                                                onClick={() => fetchInventory(page)}
-                                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === page
-                                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
+                                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                            const page = i + 1;
+                                            return (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => fetchInventory(page)}
+                                                    disabled={isPending}
+                                                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === page
+                                                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                        } disabled:opacity-50`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            );
+                                        })}
                                         <button
                                             onClick={() => fetchInventory(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
+                                            disabled={currentPage === totalPages || isPending}
                                             className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <span className="sr-only">Next</span>

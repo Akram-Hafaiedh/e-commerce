@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { getAvailableStock } from '@/lib/stock';
+
+// Optional: define response type
+// import type { Product } from '@/types/product';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');
     const all = searchParams.get('all');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '12');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '12', 10);
     const categories = searchParams.get('categories');
     const featured = searchParams.get('featured');
     const onSale = searchParams.get('onSale');
     const search = searchParams.get('search');
 
-    // Handle single product fetch by slug
+    // === SINGLE PRODUCT BY SLUG ===
     if (slug) {
       const product = await prisma.product.findUnique({
         where: { slug },
@@ -26,33 +30,27 @@ export async function GET(request: NextRequest) {
           originalPrice: true,
           image: true,
           slug: true,
+          sku: true,
           featured: true,
           onSale: true,
+          isActive: true,
+          lowStockThreshold: true,
+          soldCount: true,
+          viewCount: true,
           rating: true,
           reviewCount: true,
           createdAt: true,
           updatedAt: true,
+          categoryId: true,
           category: {
             select: {
               id: true,
               name: true,
               slug: true,
               description: true,
-              image: true
-            }
-          },
-          Inventory: {
-            select: {
-              id: true,
-              quantity: true,
-              warehouseId: true,
-              warehouse: {
-                select: {
-                  name: true,
-                  code: true,
-                  city: true
-                }
-              }
+              image: true,
+              featured: true,
+              parentId: true
             }
           }
         }
@@ -65,36 +63,26 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Compute total stock
-      const productWithStock = {
+      // Get real-time stock
+      const availableStock = await getAvailableStock(product.id);
+
+      const productResponse = {
         ...product,
-        stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
-        Inventory: undefined // Remove if not needed in response
+        stock: availableStock,
       };
 
-      return NextResponse.json({ product: productWithStock });
+      return NextResponse.json({ product: productResponse });
     }
 
-    const skip = (page - 1) * limit;
-
-    // Build where clause with proper Prisma type
+    // === BUILD FILTERS ===
     const where: Prisma.ProductWhereInput = {};
 
     if (categories) {
       const categorySlugs = categories.split(',');
-      where.category = {
-        slug: { in: categorySlugs }
-      };
+      where.category = { slug: { in: categorySlugs } };
     }
-
-    if (featured === 'true') {
-      where.featured = true;
-    }
-
-    if (onSale === 'true') {
-      where.onSale = true;
-    }
-
+    if (featured === 'true') where.featured = true;
+    if (onSale === 'true') where.onSale = true;
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -102,8 +90,11 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    const skip = (page - 1) * limit;
+
+    // === ALL PRODUCTS (no pagination) ===
     if (all === 'true') {
-      const allProducts = await prisma.product.findMany({
+      const products = await prisma.product.findMany({
         where,
         select: {
           id: true,
@@ -113,45 +104,40 @@ export async function GET(request: NextRequest) {
           originalPrice: true,
           image: true,
           slug: true,
+          sku: true,
           featured: true,
           onSale: true,
+          isActive: true,
+          lowStockThreshold: true,
+          soldCount: true,
+          viewCount: true,
           rating: true,
           reviewCount: true,
           createdAt: true,
           updatedAt: true,
+          categoryId: true,
           category: {
             select: {
               id: true,
               name: true,
               slug: true
             }
-          },
-          _count: {
-            select: {
-              Inventory: true
-            }
-          },
-          Inventory: {
-            select: {
-              quantity: true
-            }
           }
         },
-        orderBy: {
-          createdAt: 'desc'
-        }
+        orderBy: { createdAt: 'desc' }
       });
 
-      // Compute stock for each product
-      const allProductsWithStock = allProducts.map(product => ({
-        ...product,
-        stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
-        Inventory: undefined // Optional: remove if not needed in response
-      }));
+      const productsWithStock = await Promise.all(
+        products.map(async (p) => ({
+          ...p,
+          stock: await getAvailableStock(p.id),
+        }))
+      );
 
-      return NextResponse.json(allProductsWithStock);
+      return NextResponse.json(productsWithStock);
     }
 
+    // === PAGINATED PRODUCTS ===
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
@@ -163,40 +149,39 @@ export async function GET(request: NextRequest) {
           originalPrice: true,
           image: true,
           slug: true,
+          sku: true,
           featured: true,
           onSale: true,
+          isActive: true,
+          lowStockThreshold: true,
+          soldCount: true,
+          viewCount: true,
           rating: true,
           reviewCount: true,
           createdAt: true,
           updatedAt: true,
+          categoryId: true,
           category: {
             select: {
               id: true,
               name: true,
               slug: true
             }
-          },
-          Inventory: {
-            select: {
-              quantity: true
-            }
           }
         },
         skip,
         take: limit,
-        orderBy: {
-          createdAt: 'desc'
-        }
+        orderBy: { createdAt: 'desc' }
       }),
       prisma.product.count({ where })
     ]);
 
-    // Compute stock for each product
-    const productsWithStock = products.map(product => ({
-      ...product,
-      stock: product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0),
-      Inventory: undefined // Optional: remove if not needed in response
-    }));
+    const productsWithStock = await Promise.all(
+      products.map(async (p) => ({
+        ...p,
+        stock: await getAvailableStock(p.id),
+      }))
+    );
 
     return NextResponse.json({
       products: productsWithStock,

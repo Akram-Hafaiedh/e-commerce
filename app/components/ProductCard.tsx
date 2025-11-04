@@ -1,13 +1,16 @@
+// components/ProductCard.tsx
+
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
+import StockBadge from './StockBadge';
 
 interface ProductCardProps {
-  product: ProductWithStock;
+  product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
@@ -78,20 +81,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Stock Badge */}
         <div className="absolute bottom-3 right-3 z-10">
-          <span
-            className={`text-xs font-medium px-2 py-1 rounded-full shadow-md ${product.stock > 10
-              ? 'bg-green-100 text-green-800'
-              : product.stock > 0
-                ? 'bg-orange-100 text-orange-800'
-                : 'bg-red-100 text-red-800'
-              }`}
-          >
-            {product.stock > 10
-              ? 'In Stock'
-              : product.stock > 0
-                ? `Only ${product.stock} left`
-                : 'Out of Stock'}
-          </span>
+          <StockBadge
+            stock={product.stock}
+            threshold={product.lowStockThreshold}
+          />
         </div>
 
         {/* In Cart Badge */}

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         const productId = searchParams.get('productId');
         const search = searchParams.get('search');
         const pageParam = searchParams.get('page');
+        const lowStock = searchParams.get('lowStock') === 'true';  // NEW: Optional filter for low stock
 
         const page = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
         const skip = (page - 1) * ITEMS_PER_PAGE;
@@ -36,13 +37,16 @@ export async function GET(request: NextRequest) {
                 ]
             };
         }
+        if (lowStock) {
+            whereClause.available = { lt: prisma.inventory.fields.reorderPoint };  // Example: Filter low available
+        }
 
         // Get total count for pagination metadata
         const totalCount = await prisma.inventory.count({
             where: whereClause
         });
 
-        // Fetch paginated inventory
+        // Fetch paginated inventory with new fields
         const inventory = await prisma.inventory.findMany({
             where: whereClause,
             include: {
@@ -53,6 +57,7 @@ export async function GET(request: NextRequest) {
                         slug: true,
                         image: true,
                         price: true,
+                        stock: true,  // Cached stock from Product
                     }
                 },
                 warehouse: {

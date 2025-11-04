@@ -4,6 +4,7 @@
 import { prisma } from '@/lib/prisma'
 import { z, ZodError } from 'zod'
 import { revalidateTag } from 'next/cache';
+import { checkStockAvailability, confirmSale, releaseReservation, reserveStock } from '@/lib/stock';
 
 const checkoutSchema = z.object({
     email: z.string().email(),
@@ -54,10 +55,22 @@ export async function processCheckout(data: CheckoutData): Promise<CheckoutResul
         // 1. Validate
         const validated = checkoutSchema.parse(data)
 
-        // 2. Generate order number
+        // 2. Check stock availability FIRST
+        const stockCheck = await checkStockAvailability(
+            data.cartItems.map(item => ({
+                productId: item.product.id,
+                quantity: item.quantity
+            }))
+        )
+
+        if (!stockCheck.available) {
+            return { success: false, error: `Not enough stock for ${stockCheck.outOfStock?.join(', ')}` }
+        }
+
+        // 3. Generate order number
         const orderNumber = await generateOrderNumber()
 
-        // 3. Create order with PENDING status
+        // 4. Create order with PENDING status
         const order = await prisma.order.create({
             data: {
                 orderNumber,
@@ -99,7 +112,24 @@ export async function processCheckout(data: CheckoutData): Promise<CheckoutResul
             }
         })
 
-        // 4. Process payment
+        // 5. Reserve stock for each item
+        const reservations = await Promise.all(
+            data.cartItems.map(item =>
+                reserveStock(item.product.id, item.quantity, order.id)
+            )
+        )
+
+        if (reservations.some(r => !r)) {
+            // If any reservation fails, delete order
+            await prisma.order.delete({ where: { id: order.id } })
+            return {
+                success: false,
+                error: 'Failed to reserve stock. Some items may have sold out.'
+            }
+        }
+
+
+        // 6. Process payment
         const paymentResult = await processPayment({
             amount: data.total,
             orderId: order.id,
@@ -107,35 +137,43 @@ export async function processCheckout(data: CheckoutData): Promise<CheckoutResul
         })
 
         if (!paymentResult.success) {
-            // payment Failed - update Order
+            // Payment failed - release reservations and delete order
 
-            await prisma.order.update({
-                where: { id: order.id },
-                data: {
-                    status: 'CANCELLED',
-                    paymentStatus: 'FAILED',
-                }
-            })
+            await Promise.all([
+                ...data.cartItems.map(item =>
+                    releaseReservation(item.product.id, item.quantity, order.id)
+                ),
+                prisma.order.delete({ where: { id: order.id } })
+            ])
 
             return {
                 success: false,
-                error: 'Payment failed. Please try again.',
+                error: 'Payment failed. Please check your card details and try again.'
             }
         }
 
-        // 5. Payment successful - update order
-        await prisma.order.update({
-            where: { id: order.id },
-            data: {
-                status: 'PROCESSING',
-                paymentStatus: 'PAID',
-                paymentId: paymentResult.paymentId,
-                paidAt: new Date(),
-            }
-        })
+        // 7. Payment successful - confirm sales
+        await Promise.all([
+            // Update order status
+            prisma.order.update({
+                where: { id: order.id },
+                data: {
+                    status: 'PROCESSING',
+                    paymentStatus: 'PAID',
+                    paymentId: paymentResult.paymentId,
+                    paidAt: new Date()
+                }
+            }),
 
-        // 6. Revalidate
+            // Confirm all sales (convert reservations to actual sales)
+            ...data.cartItems.map(item =>
+                confirmSale(item.product.id, item.quantity, order.id)
+            )
+        ])
+
+        // 8. Revalidate cache
         revalidateTag('orders')
+        revalidateTag('products') // Stock changed
 
         return {
             success: true,
@@ -186,6 +224,10 @@ async function processPayment(data: { amount: number, orderId: string, cardNumbe
     console.log('Processing payment for order', data.orderId, 'with card number', data.cardNumber)
 
     await new Promise(resolve => setTimeout(resolve, 2000))
+
+    if (Math.random() < 0.05) {
+        return { success: false }
+    }
 
     return {
         success: true,

@@ -5,6 +5,9 @@ import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types/product';
 import { Warehouse } from '@/types/warehouse';
+import { getErrorMessage } from '@/lib/error';
+import { adjustStock } from '@/app/actions/inventory';
+import { MovementType } from '@prisma/client';
 
 export default function StockAdjustmentPage() {
     const { isAdmin, isLoading } = useAuth();
@@ -14,7 +17,11 @@ export default function StockAdjustmentPage() {
     const [error, setError] = useState('');
     const [products, setProducts] = useState<Product[]>([]);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-    const [currentStock, setCurrentStock] = useState<number | null>(null);
+    const [currentStock, setCurrentStock] = useState<{
+        quantity: number;
+        reserved: number;
+        available: number;
+    } | null>(null);
 
     const [formData, setFormData] = useState({
         productId: '',
@@ -62,9 +69,14 @@ export default function StockAdjustmentPage() {
             if (response.ok) {
                 const data = await response.json();
                 if (data.inventory && data.inventory.length > 0) {
-                    setCurrentStock(data.inventory[0].quantity);
+                    const inv = data.inventory[0];
+                    setCurrentStock({
+                        quantity: inv.quantity,
+                        reserved: inv.reserved,
+                        available: inv.available,
+                    });
                 } else {
-                    setCurrentStock(0);
+                    setCurrentStock({ quantity: 0, reserved: 0, available: 0 });
                 }
             }
         } catch (error) {
@@ -101,36 +113,28 @@ export default function StockAdjustmentPage() {
         setError('');
 
         try {
-            const response = await fetch('/api/admin/stock-movements', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    quantity: parseInt(formData.quantity),
-                }),
+            const adjustment = parseInt(formData.quantity);
+            if (adjustment < 0 && currentStock && Math.abs(adjustment) > currentStock.available) {
+                throw new Error('Cannot adjust below available stock');
+            }
+
+            await adjustStock({
+                productId: formData.productId,
+                warehouseId: formData.warehouseId,
+                quantity: adjustment,
+                movementType: formData.movementType as MovementType,
+                note: formData.note,
+                referenceId: formData.referenceId
             });
 
-            if (response.ok) {
-                router.push('/admin/inventory');
-                router.refresh();
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Failed to adjust stock');
-            }
-        } catch (error) {
-            setError('Error adjusting stock');
+            router.push('/admin/inventory');
+            router.refresh();
+        } catch (error: unknown) {
+            setError(getErrorMessage(error));  // Use your error helper
             console.error('Error adjusting stock:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const calculateNewStock = () => {
-        if (currentStock === null || !formData.quantity) return null;
-        const adjustment = parseInt(formData.quantity);
-        return currentStock + adjustment;
     };
 
     const getMovementTypeOptions = () => {
@@ -165,7 +169,7 @@ export default function StockAdjustmentPage() {
         );
     }
 
-    const newStock = calculateNewStock();
+    const newAvailable = currentStock ? currentStock.available + parseInt(formData.quantity) : null;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
@@ -253,10 +257,18 @@ export default function StockAdjustmentPage() {
 
                             {/* Current Stock Display */}
                             {currentStock !== null && (
-                                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-blue-900">Current Stock:</span>
-                                        <span className="text-lg font-bold text-blue-700">{currentStock} units</span>
+                                <div className="mt-4 grid grid-cols-3 gap-4">
+                                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                        <p className="text-sm font-medium text-blue-900">Quantity</p>
+                                        <p className="text-lg font-bold text-blue-700">{currentStock.quantity} units</p>
+                                    </div>
+                                    <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                        <p className="text-sm font-medium text-orange-900">Reserved</p>
+                                        <p className="text-lg font-bold text-orange-700">{currentStock.reserved} units</p>
+                                    </div>
+                                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                                        <p className="text-sm font-medium text-green-900">Available</p>
+                                        <p className="text-lg font-bold text-green-700">{currentStock.available} units</p>
                                     </div>
                                 </div>
                             )}
@@ -338,15 +350,15 @@ export default function StockAdjustmentPage() {
                             </div>
 
                             {/* New Stock Preview */}
-                            {newStock !== null && (
+                            {newAvailable !== null && (
                                 <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-green-900">New Stock After Adjustment:</span>
-                                        <span className={`text-lg font-bold ${newStock < 0 ? 'text-red-600' : 'text-green-700'}`}>
-                                            {newStock} units
+                                        <span className="text-sm font-medium text-green-900">New Available After Adjustment:</span>
+                                        <span className={`text-lg font-bold ${newAvailable < 0 ? 'text-red-600' : 'text-green-700'}`}>
+                                            {newAvailable} units
                                         </span>
                                     </div>
-                                    {newStock < 0 && (
+                                    {newAvailable < 0 && (
                                         <p className="mt-2 text-xs text-red-600">
                                             Warning: This adjustment will result in negative stock
                                         </p>

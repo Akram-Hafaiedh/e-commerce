@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
 import ProductCard from './ProductCard';
 
 interface AnimatedProductSliderProps {
-  products: ProductWithStock[];
+  products: Product[];
   title?: string;
   description?: string;
   backgroundColor?: string;
