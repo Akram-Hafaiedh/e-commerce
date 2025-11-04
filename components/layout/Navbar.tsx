@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../app/context/CartContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CartDropdown from '../CartDropdown';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../app/hooks/useAuth';
 import UserDropdown from '../UserDropdown';
 import AuthDropdown from '../AuthDropdown';
 import Image from 'next/image';

@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../app/hooks/useAuth';
 import Link from 'next/link';
 
 interface UserDropdownProps {
@@ -57,8 +57,8 @@ export default function UserDropdown({ isAdmin = false }: UserDropdownProps) {
             <button
                 onClick={handleToggle}
                 className={`flex items-center space-x-2 p-2 transition-colors ${isAdmin
-                        ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg'
-                        : 'text-gray-700 hover:text-blue-600'
+                    ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg'
+                    : 'text-gray-700 hover:text-blue-600'
                     }`}
             >
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">

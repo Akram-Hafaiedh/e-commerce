@@ -1,5 +1,5 @@
 'use client';
-import { useCart } from "../context/CartContext";
+import { useCart } from "../app/context/CartContext";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CartDropdownProps, CartItem } from "@/types/cart";

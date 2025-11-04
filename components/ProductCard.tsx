@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../app/context/CartContext';
 import { Product } from '@/types/product';
 import StockBadge from './StockBadge';
 
