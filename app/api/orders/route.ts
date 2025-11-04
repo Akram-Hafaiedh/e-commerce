@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { OrderItem } from "@/types/order";
 
 
+interface OrderItem {
+    product: { id: string; name: string; price: number }
+    quantity: number
+}
 export async function GET(req: NextRequest) {
     try {
         const email = req.nextUrl.searchParams.get('email');
