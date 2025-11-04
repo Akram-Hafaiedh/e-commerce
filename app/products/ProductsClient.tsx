@@ -4,13 +4,13 @@ import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/parts/Pagination';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
 import { Category } from '@/types/category';
 
 const ITEMS_PER_PAGE = 12;
 
 interface Props {
-    initialProducts: ProductWithStock[];
+    initialProducts: Product[];
     initialTotal: number;
     initialPage: number;
     initialTotalPages: number;

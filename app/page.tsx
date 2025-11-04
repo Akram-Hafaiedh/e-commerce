@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
 import { Category } from '@/types/category';
 import ProductCard from './components/ProductCard';
 import AnimatedProductSlider from './components/AnimatedProductSlider';
@@ -168,7 +168,7 @@ async function FeaturedProductsSection() {
 
   const data = await response.json();
   const products = data.products;
-  const featuredProducts = products.filter((p: ProductWithStock) => p.featured).slice(0, 8);
+  const featuredProducts = products.filter((p: Product) => p.featured).slice(0, 8);
 
   if (featuredProducts.length === 0) return null;
 
@@ -200,7 +200,7 @@ async function FeaturedProductsSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product: ProductWithStock) => (
+          {featuredProducts.map((product: Product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -218,7 +218,7 @@ async function SaleProductsSection() {
   if (!response.ok) throw new Error('Failed to fetch sale products');
 
   const data = await response.json();
-  const saleProducts = data.products.filter((p: ProductWithStock) => p.onSale).slice(0, 8);
+  const saleProducts = data.products.filter((p: Product) => p.onSale).slice(0, 8);
 
   if (saleProducts.length === 0) return null;
 
@@ -250,7 +250,7 @@ async function NewArrivalsSection() {
 
   const data = await response.json();
   const newArrivals = [...data.products]
-    .sort((a: ProductWithStock, b: ProductWithStock) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a: Product, b: Product) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 8);
 
   if (newArrivals.length === 0) return null;
@@ -281,7 +281,7 @@ async function PopularProductsSection() {
 
   const data = await response.json();
   const popularProducts = data.products
-    .filter((p: ProductWithStock) => p.rating && p.rating >= 4.5)
+    .filter((p: Product) => p.rating && p.rating >= 4.5)
     .slice(0, 8);
 
   if (popularProducts.length === 0) return null;

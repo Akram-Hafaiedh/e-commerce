@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
 import { Category } from '@/types/category';
 import ProductsClient from './ProductsClient';
 
@@ -7,7 +7,7 @@ import ProductsClient from './ProductsClient';
 const ITEMS_PER_PAGE = 12;
 
 interface ProductsResponse {
-    products: ProductWithStock[];
+    products: Product[];
     total: number;
     page: number;
     totalPages: number;

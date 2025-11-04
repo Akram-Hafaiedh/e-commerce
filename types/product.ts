@@ -7,18 +7,23 @@ export interface Product {
     price: number;
     originalPrice: number | null;
     image: string;
-    category: Category;
-    categoryId: string;
+    images?: string[];
     slug: string;
+    sku: string | null;
     featured: boolean;
     onSale: boolean;
+    isActive: boolean;
+
+    stock: number;
+    lowStockThreshold: number;
+    soldCount: number;
+    viewCount: number;
+
     rating: number | null;
     reviewCount: number;
-    stock?: number;
     createdAt: Date;
     updatedAt: Date;
-}
+    categoryId: string;
 
-export interface ProductWithStock extends Product {
-    stock: number;
+    category: Category;
 }

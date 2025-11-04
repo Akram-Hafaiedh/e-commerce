@@ -2,19 +2,19 @@
 
 import { useCart } from "@/app/context/CartContext";
 import { Category } from "@/types/category";
-import { Product, ProductWithStock } from "@/types/product";
+import { Product } from "@/types/product";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
 interface ProductContentProps {
-    product: ProductWithStock; // Use the proper type
+    product: Product; // Use the proper type
     category?: Category;
 }
 
 export default function ProductContent({ product, category }: ProductContentProps) {
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
-    const [relatedProducts, setRelatedProducts] = useState<ProductWithStock[]>([]);
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [loadingRelated, setLoadingRelated] = useState(true);
 
     const currentStock = product.stock || 0;

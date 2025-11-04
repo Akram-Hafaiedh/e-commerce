@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import ProductCard from '@/app/components/ProductCard';
 import Pagination from '@/app/components/parts/Pagination';
 import { CategoryWithCount } from '@/types/category';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
 
 export default function SingleCategoryPage() {
     const params = useParams();
@@ -15,7 +15,7 @@ export default function SingleCategoryPage() {
 
     const [category, setCategory] = useState<CategoryWithCount | null>(null);
     const [subcategories, setSubcategories] = useState<CategoryWithCount[]>([]);
-    const [products, setProducts] = useState<ProductWithStock[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [sortBy, setSortBy] = useState<'name' | 'price' | 'rating' | 'newest'>('name');
     const [currentPage, setCurrentPage] = useState(1);

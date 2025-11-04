@@ -1,17 +1,20 @@
+// app/products/[slug]/page.tsx
+
 export const dynamicParams = true;
 export const revalidate = 3600; // 1 hour
 
 import { notFound } from 'next/navigation';
 import ProductContent from './ProductContent';
 import { prisma } from '@/lib/prisma';
-import { ProductWithStock } from '@/types/product';
+import { Product } from '@/types/product';
+import { getAvailableStock } from '@/lib/stock';
 
 interface ProductPageProps {
     params: { slug: string };
 }
 
 
-async function getProduct(slug: string): Promise<ProductWithStock | null> {
+async function getProduct(slug: string): Promise<Product | null> {
     // console.log('[SERVER] Starting getProduct for slug:', slug);
     try {
         const product = await prisma.product.findUnique({
@@ -27,13 +30,10 @@ async function getProduct(slug: string): Promise<ProductWithStock | null> {
         });
 
         if (product) {
-            // console.log('[SERVER] Product found:', product.id, product.name);
-            const totalStock = product.Inventory.reduce((sum, inv) => sum + inv.quantity, 0);
-
-            // Return product with calculated stock
+            const availableStock = await getAvailableStock(product.id);
             return {
                 ...product,
-                stock: totalStock
+                stock: availableStock
             };
         } else {
             // console.log('[SERVER] No product found for slug:', slug);
