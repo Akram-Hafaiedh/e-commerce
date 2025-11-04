@@ -1,35 +1,34 @@
-import { User } from "./auth";
-import { Product } from "./product";
+import { Order, OrderItem, OrderStatus, PaymentStatus, Product } from '@prisma/client';
 
-export interface OrderItem {
-    id: string;
-    product: Product;
-    quantity: number;
-    price: number;
-}
+// Order with items and product details
+export type OrderWithItems = Order & {
+    items: (OrderItem & {
+        product: Pick<Product, 'id' | 'name' | 'image' | 'slug'>;
+    })[];
+};
 
-export interface Order {
-    id: string;
-    date: string;
-    status: 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-    items: OrderItem[];
-    total: number;
-    shippingAddress: {
-        firstName: string;
-        lastName: string;
-        address: string;
-        city: string;
-        zipCode: string;
-        country: string;
-    };
-    paymentMethod: {
-        cardEnding: string;
-        expiryDate: string;
-    };
-    userId?: string | null;
-    guestEmail?: string | null;
-    User?: User | null;
+// For API responses
+export interface OrderVerifyRequest {
     orderNumber: string;
-    createdAt: string;
-    updatedAt: string;
+    email: string;
 }
+
+export interface OrderVerifyResponse {
+    success: boolean;
+    order?: OrderWithItems;
+    error?: string;
+}
+
+// For order display
+export interface OrderSummary {
+    id: string;
+    orderNumber: string;
+    status: OrderStatus;
+    paymentStatus: PaymentStatus;
+    total: number;
+    createdAt: Date;
+    itemCount: number;
+}
+
+// Export Prisma enums for convenience
+export { OrderStatus, PaymentStatus } from '@prisma/client';

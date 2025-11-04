@@ -185,7 +185,7 @@ export default function InventoryManagement() {
                                 value={selectedWarehouse}
                                 onChange={(e) => setSelectedWarehouse(e.target.value)}
                                 disabled={isPending}
-                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 bg-white text-gray-900"
                             >
                                 <option value="all">All Warehouses</option>
                                 {warehouses.map(warehouse => (
@@ -207,7 +207,7 @@ export default function InventoryManagement() {
                                     setCurrentPage(1);
                                 }}
                                 disabled={isPending}
-                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 bg-white text-gray-900"
                             >
                                 <option value={10}>10</option>
                                 <option value={25}>25</option>
@@ -225,7 +225,7 @@ export default function InventoryManagement() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 disabled={isPending}
-                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 bg-white text-gray-900 placeholder-gray-700"
                                 placeholder="Search products..."
                             />
                         </div>

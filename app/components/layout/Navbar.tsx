@@ -132,19 +132,15 @@ export default function Navbar() {
                             >
                                 Categories
                             </Link>
-
-                            {/* Admin Link - Only show for admin users */}
-                            {isAuthenticated && user?.role === 'admin' && (
-                                <Link
-                                    href="/admin"
-                                    className={`${pathname.startsWith('/admin')
-                                        ? 'text-blue-600 border-b-2 border-blue-600'
-                                        : 'text-gray-700 hover:text-blue-600'
-                                        } font-medium transition-colors`}
-                                >
-                                    Admin
-                                </Link>
-                            )}
+                            <Link
+                                href="/orders/track"
+                                className={`${pathname.startsWith('/orders')
+                                    ? 'text-blue-600 border-b-2 border-blue-600'
+                                    : 'text-gray-700 hover:text-blue-600'
+                                    } font-medium transition-colors`}
+                            >
+                                Orders
+                            </Link>
                         </div>
 
                         {/* Right side icons */}
@@ -260,19 +256,16 @@ export default function Navbar() {
                         >
                             Categories
                         </Link>
+                        <Link
+                            href="/orders/track"
+                            className={`block py-2 px-4 rounded-lg ${pathname.startsWith('/orders')
+                                ? 'bg-blue-50 text-blue-600 font-semibold'
+                                : 'text-gray-700 hover:bg-gray-50'
+                                } transition-colors`}
+                        >
+                            Orders
+                        </Link>
 
-                        {/* Admin Link - Only show for admin users */}
-                        {isAuthenticated && user?.role === 'admin' && (
-                            <Link
-                                href="/admin"
-                                className={`block py-2 px-4 rounded-lg ${pathname.startsWith('/admin')
-                                    ? 'bg-blue-50 text-blue-600 font-semibold'
-                                    : 'text-gray-700 hover:bg-gray-50'
-                                    } transition-colors`}
-                            >
-                                Admin
-                            </Link>
-                        )}
 
                         {/* Search on mobile */}
                         <button className="w-full py-2 px-4 rounded-lg text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 sm:hidden">

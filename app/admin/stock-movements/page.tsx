@@ -154,15 +154,18 @@ export default function StockMovementsPage() {
                                 id="movement-type"
                                 value={filters.movementType}
                                 onChange={(e) => setFilters(prev => ({ ...prev, movementType: e.target.value }))}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                             >
                                 <option value="all">All Types</option>
-                                <option value="SALE">Sale</option>
-                                <option value="RETURN">Return</option>
-                                <option value="RESTOCK">Restock</option>
-                                <option value="ADJUSTMENT">Adjustment</option>
-                                <option value="TRANSFER_IN">Transfer In</option>
-                                <option value="TRANSFER_OUT">Transfer Out</option>
+                                <option value="SALE">🛒 Sale</option>
+                                <option value="RETURN">↩️ Return</option>
+                                <option value="RESTOCK">📦 Restock</option>
+                                <option value="ADJUSTMENT">⚖️Adjustment</option>
+                                <option value="TRANSFER_IN">⬇️ Transfer In</option>
+                                <option value="TRANSFER_OUT">⬆️ Transfer Out</option>
+                                <option value="RESERVATION">⏳ Reservation</option>
+                                <option value="RELEASE">🔓 Release</option>
+                                <option value="DAMAGED">💥 Damaged</option>
                             </select>
                         </div>
                         {/* Add warehouse and product filters here */}

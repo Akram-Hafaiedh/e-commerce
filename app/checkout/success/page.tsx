@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
+
 function SuccessContent() {
     const searchParams = useSearchParams();
     const orderNumber = searchParams.get('orderNumber');
@@ -17,11 +18,9 @@ function SuccessContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
                         Order Placed Successfully!
                     </h1>
-
                     {orderNumber && (
                         <p className="text-gray-600 mb-2">
                             Your order number is:
@@ -30,11 +29,9 @@ function SuccessContent() {
                             </span>
                         </p>
                     )}
-
                     <p className="text-gray-600 mb-8">
                         We&apos;ve sent a confirmation email with your order details.
                     </p>
-
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
                             href="/products"
@@ -43,10 +40,10 @@ function SuccessContent() {
                             Continue Shopping
                         </Link>
                         <Link
-                            href="/orders"
+                            href={orderNumber ? `/orders/${orderNumber}` : '/products'}
                             className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
                         >
-                            View Orders
+                            {orderNumber ? 'View Order' : 'Continue Shopping'}
                         </Link>
                     </div>
                 </div>
@@ -57,7 +54,14 @@ function SuccessContent() {
 
 export default function CheckoutSuccessPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading your order confirmation...</p>
+                </div>
+            </div>
+        }>
             <SuccessContent />
         </Suspense>
     );
