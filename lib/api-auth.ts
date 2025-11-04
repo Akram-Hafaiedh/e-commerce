@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authOptions } from './auth';
 import { Session as NextAuthSession } from 'next-auth';
+import { User } from '@/types/auth';
 
 export async function requireAuth(callback?: (session: NextAuthSession) => boolean) {
     const session = await getServerSession(authOptions);
@@ -23,5 +24,9 @@ export async function requireAdmin() {
 
 export async function getCurrentUser() {
     const session = await getServerSession(authOptions);
-    return session?.user
+    if (!session?.user) {
+        return null;
+    }
+
+    return session.user as User;
 }

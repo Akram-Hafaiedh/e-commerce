@@ -14,10 +14,16 @@ export function useAuth(): UseAuthReturn {
 
     const user: User | null = session?.user ? {
         id: session.user.id,
-        name: session.user.name || null,
-        email: session.user.email || '',
+        name: session.user.name,
+        email: session.user.email,
         role: session.user.role,
-        createdAt: session.user.createdAt instanceof Date ? session.user.createdAt.toISOString() : (session.user.createdAt || ''),
+        createdAt: session.user.createdAt,
+        updatedAt: session.user.updatedAt,
+        address: session.user.address,
+        avatar: session.user.avatar,
+        isActive: session.user.isActive,
+        lastLogin: session.user.lastLogin,
+        phone: session.user.phone,
     } : null;
 
     const signIn = async (
@@ -40,7 +46,7 @@ export function useAuth(): UseAuthReturn {
     const updateSession = async (): Promise<void> => {
         await update();
     };
-    
+
 
     return {
         user,
