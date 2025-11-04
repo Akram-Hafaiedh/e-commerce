@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Order } from '@/types/order';
+import { OrderSummary } from '@/types/order';
 
 interface UserDetail {
   id: string;
@@ -17,7 +17,7 @@ interface UserDetail {
   lastLogin: string | null;
   createdAt: string;
   updatedAt: string;
-  orders: Order[];
+  orders: OrderSummary[];
   _count: {
     orders: number;
   };

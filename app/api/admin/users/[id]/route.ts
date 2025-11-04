@@ -27,28 +27,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 createdAt: true,
                 updatedAt: true,
                 orders: {
-                    include: {
+                    select: {
+                        id: true,
+                        orderNumber: true,
+                        status: true,
+                        paymentStatus: true,
+                        total: true,
+                        createdAt: true,
                         items: {
-                            include: {
-                                product: {
-                                    select: {
-                                        name: true,
-                                        price: true,
-                                        image: true,
-                                    },
-                                },
-                            },
-                        },
+                            select: {
+                                id: true
+                            }
+                        }
                     },
-                    orderBy: {
-                        createdAt: 'desc',
-                    },
+                    orderBy: { createdAt: 'desc' },
                     take: 10, // Limit recent orders
                 },
                 _count: {
-                    select: {
-                        orders: true,
-                    },
+                    select: { orders: true },
                 },
             },
         });
