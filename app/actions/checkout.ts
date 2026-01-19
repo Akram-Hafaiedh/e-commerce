@@ -172,8 +172,8 @@ export async function processCheckout(data: CheckoutData): Promise<CheckoutResul
         ])
 
         // 8. Revalidate cache
-        revalidateTag('orders')
-        revalidateTag('products') // Stock changed
+        revalidateTag('orders', {})
+        revalidateTag('products', {}) // Stock changed
 
         return {
             success: true,

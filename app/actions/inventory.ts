@@ -153,8 +153,8 @@ export async function adjustStock(data: AdjustStockData): Promise<AdjustStockRes
         // Revalidate relevant pages
         revalidatePath('/admin/inventory')
         revalidatePath('/admin/stock-movements')
-        revalidateTag('products')
-        revalidateTag('inventory')
+        revalidateTag('products', {})
+        revalidateTag('inventory', {})
 
         return {
             success: true,
